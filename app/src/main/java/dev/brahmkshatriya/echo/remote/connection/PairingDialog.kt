@@ -6,7 +6,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import dev.brahmkshatriya.echo.R
 
 class PairingDialog {
-    
+
     companion object {
         /**
          * Show a dialog to accept or reject an incoming connection request
@@ -18,7 +18,7 @@ class PairingDialog {
             onReject: () -> Unit
         ) {
             var trustDevice = false
-            
+
             MaterialAlertDialogBuilder(context)
                 .setTitle(R.string.connection_request)
                 .setMessage(context.getString(R.string.x_wants_to_connect, deviceName))
