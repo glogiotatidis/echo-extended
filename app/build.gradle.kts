@@ -83,6 +83,9 @@ dependencies {
     implementation(libs.nestedscrollwebview)
     implementation(libs.acsbendi.webview)
 
+    // WebSocket for remote control
+    implementation("org.java-websocket:Java-WebSocket:1.5.7")
+
     if (!hasGoogleServices) return@dependencies
     implementation(libs.bundles.firebase)
 }
