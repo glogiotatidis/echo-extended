@@ -18,7 +18,7 @@ class PairingDialog {
             onReject: () -> Unit
         ) {
             var trustDevice = false
-            
+
             val dialog = MaterialAlertDialogBuilder(context)
                 .setTitle(R.string.connection_request)
                 .setMessage(context.getString(R.string.x_wants_to_connect, deviceName))
@@ -34,7 +34,7 @@ class PairingDialog {
                 }
                 .setCancelable(false)
                 .create()
-            
+
             dialog.show()
         }
     }

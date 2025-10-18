@@ -21,9 +21,11 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 class RemoteViewModel(
-    private val context: Context,
+    context: Context,
     private val settings: SharedPreferences
 ) : ViewModel() {
+    
+    private val context = context.applicationContext
 
     private val _isPlayerModeEnabled = MutableStateFlow(false)
     val isPlayerModeEnabled: StateFlow<Boolean> = _isPlayerModeEnabled.asStateFlow()

@@ -27,7 +27,6 @@ import dev.brahmkshatriya.echo.ui.playlist.save.SaveToPlaylistViewModel
 import dev.brahmkshatriya.echo.ui.remote.RemoteViewModel
 import dev.brahmkshatriya.echo.utils.ContextUtils.getSettings
 import org.koin.android.ext.koin.androidApplication
-import org.koin.android.ext.koin.androidContext
 import org.koin.androidx.workmanager.dsl.workerOf
 import org.koin.core.module.dsl.singleOf
 import org.koin.core.module.dsl.viewModelOf
@@ -84,7 +83,7 @@ object DI {
         viewModelOf(::DownloadViewModel)
         
         // Remote Control
-        viewModel { RemoteViewModel(androidApplication(), get()) }
+        viewModelOf(::RemoteViewModel)
     }
 
     val appModule = module {

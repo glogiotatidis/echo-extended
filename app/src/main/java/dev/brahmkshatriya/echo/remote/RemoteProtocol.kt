@@ -41,7 +41,7 @@ sealed class RemoteMessage {
 
     @Serializable
     data class Next(val dummy: Boolean = true) : RemoteMessage()
-    
+
     @Serializable
     data class Previous(val dummy: Boolean = true) : RemoteMessage()
 
