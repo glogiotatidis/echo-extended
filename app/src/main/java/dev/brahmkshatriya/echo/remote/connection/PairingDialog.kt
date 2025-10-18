@@ -18,8 +18,8 @@ class PairingDialog {
             onReject: () -> Unit
         ) {
             var trustDevice = false
-
-            MaterialAlertDialogBuilder(context)
+            
+            val dialog = MaterialAlertDialogBuilder(context)
                 .setTitle(R.string.connection_request)
                 .setMessage(context.getString(R.string.x_wants_to_connect, deviceName))
                 .setPositiveButton(R.string.accept) { _, _ ->
@@ -28,13 +28,14 @@ class PairingDialog {
                 .setNegativeButton(R.string.reject) { _, _ ->
                     onReject()
                 }
-                .setNeutralButton(R.string.trust_device) { dialog, _ ->
+                .setNeutralButton(R.string.trust_device) { _, _ ->
                     trustDevice = true
-                    // Trigger accept after trust is set
-                    (dialog as? DialogInterface)?.getButton(DialogInterface.BUTTON_POSITIVE)?.performClick()
+                    onAccept(true)
                 }
                 .setCancelable(false)
-                .show()
+                .create()
+            
+            dialog.show()
         }
     }
 }

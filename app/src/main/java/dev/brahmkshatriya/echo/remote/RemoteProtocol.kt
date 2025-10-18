@@ -40,10 +40,10 @@ sealed class RemoteMessage {
     data class SeekRelative(val delta: Long) : RemoteMessage()
 
     @Serializable
-    data class Next : RemoteMessage()
-
+    data class Next(val dummy: Boolean = true) : RemoteMessage()
+    
     @Serializable
-    data class Previous : RemoteMessage()
+    data class Previous(val dummy: Boolean = true) : RemoteMessage()
 
     @Serializable
     data class SetShuffleMode(val enabled: Boolean) : RemoteMessage()
@@ -92,7 +92,7 @@ sealed class RemoteMessage {
     data class MoveQueueItem(val fromPosition: Int, val toPosition: Int) : RemoteMessage()
 
     @Serializable
-    data class ClearQueue : RemoteMessage()
+    data class ClearQueue(val dummy: Boolean = true) : RemoteMessage()
 
     @Serializable
     data class PlayQueueItem(val position: Int) : RemoteMessage()

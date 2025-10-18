@@ -14,12 +14,13 @@ class ExtensionValidator(private val extensionLoader: ExtensionLoader) {
      * Validate if the required extension is available on this device
      */
     fun validateExtension(extensionId: String): ValidationResult {
-        val extension = extensionLoader.music.getExtension(extensionId)
-
+        val extensions = extensionLoader.music.extensions.value
+        val extension = extensions.find { it.metadata.id == extensionId }
+        
         return if (extension != null) {
             ValidationResult.Valid
         } else {
-            val available = extensionLoader.music.extensions.value.map { it.metadata.id }
+            val available = extensions.map { it.metadata.id }
             Log.w(TAG, "Extension not found: $extensionId. Available: $available")
             ValidationResult.Invalid(
                 code = RemoteMessage.ErrorCode.EXTENSION_NOT_FOUND,
@@ -40,7 +41,8 @@ class ExtensionValidator(private val extensionLoader: ExtensionLoader) {
      * Get list of all installed extension IDs
      */
     fun getInstalledExtensionIds(): List<String> {
-        return extensionLoader.music.extensions.value.map { it.metadata.id }
+        val extensions = extensionLoader.music.extensions.value
+        return extensions.map { it.metadata.id }
     }
 
     /**

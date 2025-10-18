@@ -82,11 +82,9 @@ object DI {
         viewModelOf(::EditPlaylistViewModel)
 
         viewModelOf(::DownloadViewModel)
-
+        
         // Remote Control
-        viewModelOf(::RemoteViewModel) {
-            RemoteViewModel(androidContext(), get())
-        }
+        viewModel { RemoteViewModel(androidApplication(), get()) }
     }
 
     val appModule = module {
