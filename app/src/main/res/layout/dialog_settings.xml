@@ -114,6 +114,12 @@
                     app:icon="@drawable/ic_palette" />
 
                 <com.google.android.material.button.MaterialButton
+                    android:id="@+id/remoteControl"
+                    style="@style/SideBarButton"
+                    android:text="@string/remote_control"
+                    app:icon="@drawable/ic_sensors" />
+
+                <com.google.android.material.button.MaterialButton
                     android:id="@+id/other"
                     style="@style/SideBarButton"
                     android:text="@string/other"

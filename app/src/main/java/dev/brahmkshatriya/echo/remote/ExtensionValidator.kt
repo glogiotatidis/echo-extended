@@ -16,7 +16,7 @@ class ExtensionValidator(private val extensionLoader: ExtensionLoader) {
     fun validateExtension(extensionId: String): ValidationResult {
         val extensions = extensionLoader.music.value
         val extension = extensions.find { it.id == extensionId }
-        
+
         return if (extension != null) {
             ValidationResult.Valid
         } else {

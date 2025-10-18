@@ -25,7 +25,10 @@ import dev.brahmkshatriya.echo.ui.extensions.ExtensionsViewModel.Companion.confi
 import dev.brahmkshatriya.echo.ui.main.MainFragment
 import dev.brahmkshatriya.echo.ui.player.PlayerFragment
 import dev.brahmkshatriya.echo.ui.player.PlayerFragment.Companion.PLAYER_COLOR
+import dev.brahmkshatriya.echo.ui.player.PlayerViewModel
+import dev.brahmkshatriya.echo.ui.remote.RemoteViewModel
 import dev.brahmkshatriya.echo.utils.ContextUtils.getSettings
+import dev.brahmkshatriya.echo.utils.ContextUtils.observe
 import dev.brahmkshatriya.echo.utils.PermsUtils.checkAppPermissions
 import dev.brahmkshatriya.echo.utils.ui.UiUtils.isNightMode
 import org.koin.android.ext.android.inject
@@ -37,6 +40,8 @@ open class MainActivity : AppCompatActivity() {
 
     val binding by lazy { ActivityMainBinding.inflate(layoutInflater) }
     private val uiViewModel by viewModel<UiViewModel>()
+    private val remoteViewModel by viewModel<RemoteViewModel>()
+    private val playerViewModel by viewModel<PlayerViewModel>()
     private val extensionLoader by inject<ExtensionLoader>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -65,8 +70,29 @@ open class MainActivity : AppCompatActivity() {
             add<PlayerFragment>(R.id.playerFragmentContainer, "player")
         }
         setupIntents(uiViewModel)
+        
+        // Setup remote control pairing dialog
+        setupRemoteControl()
     }
 
+    private fun setupRemoteControl() {
+        // Observe pending connection requests and show pairing dialog
+        var shownPendingIds = mutableSetOf<String>()
+        observe(remoteViewModel.pendingConnections) { pending ->
+            pending.forEach { pendingConnection ->
+                // Only show dialog once per connection request
+                if (!shownPendingIds.contains(pendingConnection.deviceId)) {
+                    shownPendingIds.add(pendingConnection.deviceId)
+                    remoteViewModel.showPairingDialog(this, pendingConnection)
+                }
+            }
+            // Clean up shown IDs when pending list is empty
+            if (pending.isEmpty()) {
+                shownPendingIds.clear()
+            }
+        }
+    }
+    
     companion object {
         const val THEME_KEY = "theme"
         const val AMOLED_KEY = "amoled"

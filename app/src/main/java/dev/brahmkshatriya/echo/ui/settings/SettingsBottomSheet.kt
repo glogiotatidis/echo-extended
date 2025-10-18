@@ -74,6 +74,11 @@ class SettingsBottomSheet : BottomSheetDialogFragment(R.layout.dialog_settings) 
             requireActivity().openFragment<SettingsLookFragment>()
         }
 
+        binding.remoteControl.setOnClickListener {
+            dismiss()
+            requireActivity().openFragment<SettingsRemoteFragment>()
+        }
+
         binding.other.setOnClickListener {
             dismiss()
             requireActivity().openFragment<SettingsOtherFragment>()

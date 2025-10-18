@@ -15,6 +15,7 @@ import dev.brahmkshatriya.echo.remote.RemoteDevice
 import dev.brahmkshatriya.echo.remote.RemoteMessage
 import dev.brahmkshatriya.echo.remote.RemotePlayerService
 import dev.brahmkshatriya.echo.remote.connection.ConnectionManager
+import dev.brahmkshatriya.echo.remote.connection.PairingDialog
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -24,7 +25,7 @@ class RemoteViewModel(
     context: Context,
     private val settings: SharedPreferences
 ) : ViewModel() {
-    
+
     private val context = context.applicationContext
 
     private val _isPlayerModeEnabled = MutableStateFlow(false)
@@ -41,19 +42,36 @@ class RemoteViewModel(
 
     private val _pendingConnections = MutableStateFlow<List<ConnectionManager.PendingConnection>>(emptyList())
     val pendingConnections: StateFlow<List<ConnectionManager.PendingConnection>> = _pendingConnections.asStateFlow()
-
+    
+    private val _isBeingControlled = MutableStateFlow(false)
+    val isBeingControlled: StateFlow<Boolean> = _isBeingControlled.asStateFlow()
+    
+    private val _controllerName = MutableStateFlow<String?>(null)
+    val controllerName: StateFlow<String?> = _controllerName.asStateFlow()
+    
     private var playerService: RemotePlayerService? = null
     private var controllerService: RemoteControllerService? = null
+    
+    // Callback for showing pairing dialog
+    var onShowPairingDialog: ((ConnectionManager.PendingConnection) -> Unit)? = null
 
     private val playerServiceConnection = object : ServiceConnection {
         override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
             val binder = service as RemotePlayerService.LocalBinder
             playerService = binder.getService()
 
-            // Observe pending connections
+            // Observe pending connections and show pairing dialog
             viewModelScope.launch {
                 playerService?.getConnectionManager()?.pendingConnections?.collect { pending ->
                     _pendingConnections.value = pending
+                    
+                    // Show pairing dialog for new pending connections
+                    pending.forEach { pendingConnection ->
+                        onShowPairingDialog?.invoke(pendingConnection)
+                    }
+                    
+                    // Update controlled state
+                    _isBeingControlled.value = binder.getService().hasConnectedControllers()
                 }
             }
         }
@@ -194,13 +212,31 @@ class RemoteViewModel(
      */
     fun acceptConnection(pending: ConnectionManager.PendingConnection, trustDevice: Boolean = false) {
         playerService?.getConnectionManager()?.acceptConnection(pending, trustDevice)
+        _isBeingControlled.value = true
+        _controllerName.value = pending.deviceName
     }
-
+    
     /**
      * Reject a pending connection request (Player mode)
      */
     fun rejectConnection(pending: ConnectionManager.PendingConnection) {
         playerService?.getConnectionManager()?.rejectConnection(pending)
+    }
+    
+    /**
+     * Show pairing dialog for a pending connection
+     */
+    fun showPairingDialog(context: Context, pending: ConnectionManager.PendingConnection) {
+        PairingDialog.show(
+            context = context,
+            deviceName = pending.deviceName,
+            onAccept = { trustDevice ->
+                acceptConnection(pending, trustDevice)
+            },
+            onReject = {
+                rejectConnection(pending)
+            }
+        )
     }
 
     /**

@@ -10,6 +10,7 @@ import androidx.preference.SwitchPreferenceCompat
 import dev.brahmkshatriya.echo.R
 import dev.brahmkshatriya.echo.common.models.ImageHolder.Companion.toResourceImageHolder
 import dev.brahmkshatriya.echo.ui.common.FragmentUtils.openFragment
+import dev.brahmkshatriya.echo.ui.remote.RemoteDevicesBottomSheet
 import dev.brahmkshatriya.echo.ui.remote.RemoteViewModel.Companion.PLAYER_MODE_ENABLED
 import dev.brahmkshatriya.echo.utils.ContextUtils.SETTINGS_NAME
 
@@ -69,10 +70,9 @@ class SettingsRemoteFragment : BaseSettingsFragment() {
         }
 
         override fun onPreferenceTreeClick(preference: Preference): Boolean {
-            val view = listView.findViewById<View>(preference.key.hashCode())
             return when (preference.key) {
                 "discover_devices" -> {
-                    // TODO: Open device discovery bottom sheet
+                    RemoteDevicesBottomSheet().show(parentFragmentManager, null)
                     true
                 }
                 else -> false

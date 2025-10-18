@@ -81,7 +81,7 @@ object DI {
         viewModelOf(::EditPlaylistViewModel)
 
         viewModelOf(::DownloadViewModel)
-        
+
         // Remote Control
         viewModelOf(::RemoteViewModel)
     }

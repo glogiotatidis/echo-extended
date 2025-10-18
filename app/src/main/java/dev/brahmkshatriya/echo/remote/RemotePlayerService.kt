@@ -252,13 +252,9 @@ class RemotePlayerService : Service() {
     private fun handleConnectionRequest(socket: WebSocket, request: RemoteMessage.ConnectionRequest) {
         Log.i(TAG, "Connection request from ${request.deviceName}")
         controllerSockets[socket] = request.deviceId
-
-        // Show pairing dialog to user
-        scope.launch(Dispatchers.Main) {
-            // For now, auto-accept in player mode (can be enhanced with dialog later)
-            // In a real implementation, we would show PairingDialog here
-            connectionManager.handleConnectionRequest(socket, request)
-        }
+        
+        // Let ConnectionManager handle it (will show pairing dialog via pending connections)
+        connectionManager.handleConnectionRequest(socket, request)
     }
 
     private fun handlePlayItem(socket: WebSocket, message: RemoteMessage.PlayItem) {
@@ -305,15 +301,24 @@ class RemotePlayerService : Service() {
     }
 
     fun getConnectionManager(): ConnectionManager = connectionManager
-
+    
     fun getDiscoveryManager(): DeviceDiscoveryManager = discoveryManager
-
+    
+    fun getStateSynchronizer(): PlayerStateSynchronizer = stateSynchronizer
+    
     /**
      * Set the PlayerViewModel for executing playback commands
      */
     fun setPlayerViewModel(viewModel: PlayerViewModel) {
         this.playerViewModel = viewModel
         Log.i(TAG, "PlayerViewModel set for remote control")
+    }
+    
+    /**
+     * Check if there are any connected controllers
+     */
+    fun hasConnectedControllers(): Boolean {
+        return controllerSockets.isNotEmpty()
     }
 
     override fun onDestroy() {
