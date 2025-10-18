@@ -22,25 +22,25 @@ class EchoWebSocketClient(
     private val onMessage: suspend (RemoteMessage) -> Unit,
     private val onConnectionStateChanged: suspend (ConnectionState) -> Unit = {}
 ) : WebSocketClient(serverUri) {
-    
+
     private val scope = CoroutineScope(Dispatchers.IO) + CoroutineName("EchoWebSocketClient")
-    
+
     private val _connectionState = MutableStateFlow(ConnectionState.DISCONNECTED)
     val connectionState: StateFlow<ConnectionState> = _connectionState.asStateFlow()
-    
+
     private var reconnectAttempts = 0
     private val maxReconnectAttempts = 5
     private val reconnectDelayMs = 3000L
-    
+
     companion object {
         private const val TAG = "EchoWebSocketClient"
         private const val PING_INTERVAL_MS = 15000L
     }
-    
+
     init {
         // Set connection timeout
         connectionLostTimeout = 30
-        
+
         // Start ping task to keep connection alive
         scope.launch {
             while (true) {
@@ -55,19 +55,19 @@ class EchoWebSocketClient(
             }
         }
     }
-    
+
     override fun onOpen(handshakedata: ServerHandshake) {
         Log.i(TAG, "Connected to server")
         reconnectAttempts = 0
         updateConnectionState(ConnectionState.CONNECTED)
     }
-    
+
     override fun onMessage(message: String) {
         scope.launch {
             try {
                 val remoteMessage = message.toData<RemoteMessage>().getOrThrow()
                 Log.d(TAG, "Received message: ${remoteMessage::class.simpleName}")
-                
+
                 // Handle ping/pong automatically
                 when (remoteMessage) {
                     is RemoteMessage.Ping -> sendMessage(RemoteMessage.Pong(remoteMessage.timestamp))
@@ -79,16 +79,16 @@ class EchoWebSocketClient(
             }
         }
     }
-    
+
     override fun onMessage(bytes: ByteBuffer?) {
         // Binary messages not used in this protocol
         Log.w(TAG, "Received unexpected binary message")
     }
-    
+
     override fun onClose(code: Int, reason: String, remote: Boolean) {
         Log.i(TAG, "Connection closed: $reason (code: $code, remote: $remote)")
         updateConnectionState(ConnectionState.DISCONNECTED)
-        
+
         // Auto-reconnect if connection was lost unexpectedly
         if (remote && reconnectAttempts < maxReconnectAttempts) {
             scope.launch {
@@ -106,12 +106,12 @@ class EchoWebSocketClient(
             }
         }
     }
-    
+
     override fun onError(ex: Exception) {
         Log.e(TAG, "WebSocket error", ex)
         updateConnectionState(ConnectionState.ERROR)
     }
-    
+
     /**
      * Connect to the server
      */
@@ -128,7 +128,7 @@ class EchoWebSocketClient(
             }
         }
     }
-    
+
     /**
      * Send a message to the server
      */
@@ -145,7 +145,7 @@ class EchoWebSocketClient(
             Log.e(TAG, "Error sending message", e)
         }
     }
-    
+
     /**
      * Disconnect from server gracefully
      */
@@ -159,7 +159,7 @@ class EchoWebSocketClient(
             closeBlocking()
         }
     }
-    
+
     private fun updateConnectionState(state: ConnectionState) {
         _connectionState.value = state
         scope.launch {

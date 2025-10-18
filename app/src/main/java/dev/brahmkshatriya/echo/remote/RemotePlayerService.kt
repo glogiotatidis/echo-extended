@@ -25,40 +25,40 @@ import org.koin.android.ext.android.inject
  * Handles incoming connections from controllers and executes playback commands.
  */
 class RemotePlayerService : Service() {
-    
+
     private val app by inject<App>()
     private val playerState by inject<PlayerState>()
     private val extensionLoader by inject<ExtensionLoader>()
-    
+
     private lateinit var discoveryManager: DeviceDiscoveryManager
     private lateinit var connectionManager: ConnectionManager
     private lateinit var extensionValidator: ExtensionValidator
     private lateinit var stateSynchronizer: PlayerStateSynchronizer
-    
+
     private var webSocketServer: EchoWebSocketServer? = null
     private val scope = CoroutineScope(Dispatchers.Main) + CoroutineName("RemotePlayerService")
-    
+
     // Map to track which socket belongs to which controller
     private val controllerSockets = mutableMapOf<WebSocket, String>()
-    
+
     private val binder = LocalBinder()
-    
+
     inner class LocalBinder : Binder() {
         fun getService(): RemotePlayerService = this@RemotePlayerService
     }
-    
+
     companion object {
         private const val TAG = "RemotePlayerService"
         private const val ACTION_START = "dev.brahmkshatriya.echo.remote.START_PLAYER"
         private const val ACTION_STOP = "dev.brahmkshatriya.echo.remote.STOP_PLAYER"
-        
+
         fun startService(context: Context) {
             val intent = Intent(context, RemotePlayerService::class.java).apply {
                 action = ACTION_START
             }
             context.startService(intent)
         }
-        
+
         fun stopService(context: Context) {
             val intent = Intent(context, RemotePlayerService::class.java).apply {
                 action = ACTION_STOP
@@ -66,31 +66,31 @@ class RemotePlayerService : Service() {
             context.startService(intent)
         }
     }
-    
+
     override fun onCreate() {
         super.onCreate()
         Log.i(TAG, "RemotePlayerService created")
-        
+
         // Initialize components
         discoveryManager = DeviceDiscoveryManager(this)
         connectionManager = ConnectionManager(this)
         extensionValidator = ExtensionValidator(extensionLoader)
         stateSynchronizer = PlayerStateSynchronizer(playerState)
-        
+
         // Setup state synchronizer callback to broadcast to all controllers
         stateSynchronizer.onStateChanged = { state ->
             webSocketServer?.broadcast(state)
         }
-        
+
         stateSynchronizer.onQueueChanged = { queueUpdate ->
             webSocketServer?.broadcast(queueUpdate)
         }
-        
+
         stateSynchronizer.onPositionChanged = { positionUpdate ->
             webSocketServer?.broadcast(positionUpdate)
         }
     }
-    
+
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
             ACTION_START -> startPlayerMode()
@@ -98,17 +98,17 @@ class RemotePlayerService : Service() {
         }
         return START_STICKY
     }
-    
+
     override fun onBind(intent: Intent?): IBinder = binder
-    
+
     private fun startPlayerMode() {
         if (webSocketServer != null) {
             Log.w(TAG, "Player mode already started")
             return
         }
-        
+
         Log.i(TAG, "Starting player mode")
-        
+
         try {
             // Start WebSocket server
             webSocketServer = EchoWebSocketServer(
@@ -118,125 +118,125 @@ class RemotePlayerService : Service() {
                 onDisconnect = { socket, reason -> handleControllerDisconnect(socket, reason) }
             )
             webSocketServer?.start()
-            
+
             // Register NSD service
             discoveryManager.registerService(
                 deviceName = "${DeviceDiscoveryManager.DEFAULT_SERVICE_NAME_PREFIX}_${android.os.Build.MODEL}",
                 port = EchoWebSocketServer.DEFAULT_PORT
             )
-            
+
             Log.i(TAG, "Player mode started successfully")
         } catch (e: Exception) {
             Log.e(TAG, "Error starting player mode", e)
         }
     }
-    
+
     private fun stopPlayerMode() {
         Log.i(TAG, "Stopping player mode")
-        
+
         // Cleanup
         webSocketServer?.shutdown()
         webSocketServer = null
         discoveryManager.unregisterService()
         stateSynchronizer.stopSync()
         controllerSockets.clear()
-        
+
         stopSelf()
     }
-    
+
     private suspend fun handleControllerConnect(socket: WebSocket) {
         Log.i(TAG, "Controller connected: ${socket.remoteSocketAddress}")
     }
-    
+
     private suspend fun handleControllerDisconnect(socket: WebSocket, reason: String) {
         val controllerId = controllerSockets.remove(socket)
         Log.i(TAG, "Controller disconnected: $controllerId, reason: $reason")
     }
-    
+
     private suspend fun handleControllerMessage(socket: WebSocket, message: RemoteMessage) {
         when (message) {
             is RemoteMessage.ConnectionRequest -> {
                 handleConnectionRequest(socket, message)
             }
-            
+
             is RemoteMessage.PlayPause -> {
                 // Will be implemented with PlayerViewModel integration
                 Log.d(TAG, "PlayPause command: ${message.isPlaying}")
             }
-            
+
             is RemoteMessage.Seek -> {
                 Log.d(TAG, "Seek command: ${message.position}")
             }
-            
+
             is RemoteMessage.Next -> {
                 Log.d(TAG, "Next command")
             }
-            
+
             is RemoteMessage.Previous -> {
                 Log.d(TAG, "Previous command")
             }
-            
+
             is RemoteMessage.SetShuffleMode -> {
                 Log.d(TAG, "SetShuffleMode: ${message.enabled}")
             }
-            
+
             is RemoteMessage.SetRepeatMode -> {
                 Log.d(TAG, "SetRepeatMode: ${message.mode}")
             }
-            
+
             is RemoteMessage.PlayItem -> {
                 handlePlayItem(socket, message)
             }
-            
+
             is RemoteMessage.AddToQueue -> {
                 handleAddToQueue(socket, message)
             }
-            
+
             is RemoteMessage.AddToNext -> {
                 handleAddToNext(socket, message)
             }
-            
+
             is RemoteMessage.RemoveQueueItem -> {
                 Log.d(TAG, "RemoveQueueItem: ${message.position}")
             }
-            
+
             is RemoteMessage.MoveQueueItem -> {
                 Log.d(TAG, "MoveQueueItem: ${message.fromPosition} -> ${message.toPosition}")
             }
-            
+
             is RemoteMessage.ClearQueue -> {
                 Log.d(TAG, "ClearQueue")
             }
-            
+
             is RemoteMessage.PlayQueueItem -> {
                 Log.d(TAG, "PlayQueueItem: ${message.position}")
             }
-            
+
             is RemoteMessage.LikeTrack -> {
                 Log.d(TAG, "LikeTrack: ${message.isLiked}")
             }
-            
+
             is RemoteMessage.Ping -> {
                 webSocketServer?.sendMessage(socket, RemoteMessage.Pong(message.timestamp))
             }
-            
+
             is RemoteMessage.Disconnect -> {
                 Log.i(TAG, "Controller requested disconnect: ${message.reason}")
                 socket.close(1000, message.reason)
             }
-            
+
             else -> {
                 Log.w(TAG, "Unhandled message type: ${message::class.simpleName}")
             }
         }
     }
-    
+
     private fun handleConnectionRequest(socket: WebSocket, request: RemoteMessage.ConnectionRequest) {
         Log.i(TAG, "Connection request from ${request.deviceName}")
         controllerSockets[socket] = request.deviceId
         connectionManager.handleConnectionRequest(socket, request)
     }
-    
+
     private fun handlePlayItem(socket: WebSocket, message: RemoteMessage.PlayItem) {
         // Validate extension
         val validation = extensionValidator.validateExtension(message.extensionId)
@@ -249,39 +249,39 @@ class RemotePlayerService : Service() {
             )
             return
         }
-        
+
         Log.d(TAG, "PlayItem: ${message.item.title} from ${message.extensionId}")
         // Actual playback will be handled by PlayerViewModel integration
     }
-    
+
     private fun handleAddToQueue(socket: WebSocket, message: RemoteMessage.AddToQueue) {
         val validation = extensionValidator.validateExtension(message.extensionId)
         if (validation is ExtensionValidator.ValidationResult.Invalid) {
             webSocketServer?.sendError(socket, validation.code, validation.message)
             return
         }
-        
+
         Log.d(TAG, "AddToQueue: ${message.item.title}")
     }
-    
+
     private fun handleAddToNext(socket: WebSocket, message: RemoteMessage.AddToNext) {
         val validation = extensionValidator.validateExtension(message.extensionId)
         if (validation is ExtensionValidator.ValidationResult.Invalid) {
             webSocketServer?.sendError(socket, validation.code, validation.message)
             return
         }
-        
+
         Log.d(TAG, "AddToNext: ${message.item.title}")
     }
-    
+
     fun getConnectionManager(): ConnectionManager = connectionManager
-    
+
     fun getDiscoveryManager(): DeviceDiscoveryManager = discoveryManager
-    
+
     override fun onDestroy() {
         super.onDestroy()
         Log.i(TAG, "RemotePlayerService destroyed")
-        
+
         webSocketServer?.shutdown()
         discoveryManager.cleanup()
         connectionManager.cleanup()

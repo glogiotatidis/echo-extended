@@ -17,29 +17,29 @@ import org.java_websocket.WebSocket
 import java.net.URI
 
 class ConnectionManager(context: Context) {
-    
+
     private val preferences: SharedPreferences = context.getSettings()
-    
+
     private val _currentConnection = MutableStateFlow<RemoteDevice?>(null)
     val currentConnection: StateFlow<RemoteDevice?> = _currentConnection.asStateFlow()
-    
+
     private val _connectionState = MutableStateFlow(ConnectionState.DISCONNECTED)
     val connectionState: StateFlow<ConnectionState> = _connectionState.asStateFlow()
-    
+
     private val _pendingConnections = MutableStateFlow<List<PendingConnection>>(emptyList())
     val pendingConnections: StateFlow<List<PendingConnection>> = _pendingConnections.asStateFlow()
-    
+
     private var webSocketClient: EchoWebSocketClient? = null
-    
+
     // Callbacks for controller mode
     var onMessageReceived: (suspend (RemoteMessage) -> Unit)? = null
     var onConnectionStateChanged: (suspend (ConnectionState) -> Unit)? = null
-    
+
     companion object {
         private const val TAG = "ConnectionManager"
         private const val PREF_TRUSTED_DEVICES = "remote_trusted_devices"
     }
-    
+
     /**
      * Represents a pending connection request from a controller
      */
@@ -50,7 +50,7 @@ class ConnectionManager(context: Context) {
         val installedExtensions: List<String>,
         val timestamp: Long = System.currentTimeMillis()
     )
-    
+
     /**
      * Connect to a remote player device (Controller mode)
      */
@@ -64,11 +64,11 @@ class ConnectionManager(context: Context) {
             Log.w(TAG, "Already connected to a device")
             return
         }
-        
+
         try {
             val uri = URI("ws://${device.address}:${device.port}")
             Log.i(TAG, "Connecting to $uri")
-            
+
             webSocketClient = EchoWebSocketClient(
                 serverUri = uri,
                 onMessage = { message ->
@@ -77,7 +77,7 @@ class ConnectionManager(context: Context) {
                 onConnectionStateChanged = { state ->
                     _connectionState.value = state
                     onConnectionStateChanged?.invoke(state)
-                    
+
                     if (state == ConnectionState.CONNECTED) {
                         _currentConnection.value = device
                         // Send connection request with device info
@@ -93,14 +93,14 @@ class ConnectionManager(context: Context) {
                     }
                 }
             )
-            
+
             webSocketClient?.connectAsync()
         } catch (e: Exception) {
             Log.e(TAG, "Error connecting to device", e)
             _connectionState.value = ConnectionState.ERROR
         }
     }
-    
+
     /**
      * Handle incoming connection request (Player mode)
      */
@@ -111,7 +111,7 @@ class ConnectionManager(context: Context) {
             deviceId = request.deviceId,
             installedExtensions = request.installedExtensions
         )
-        
+
         // Check if device is trusted
         if (isTrustedDevice(request.deviceId)) {
             Log.i(TAG, "Auto-accepting connection from trusted device: ${request.deviceName}")
@@ -124,7 +124,7 @@ class ConnectionManager(context: Context) {
             Log.i(TAG, "Connection request from ${request.deviceName} awaiting user approval")
         }
     }
-    
+
     /**
      * Accept a pending connection request
      */
@@ -134,24 +134,24 @@ class ConnectionManager(context: Context) {
                 accepted = true,
                 deviceName = android.os.Build.MODEL
             )
-            
+
             pending.socket.send(Json.encodeToString(response))
-            
+
             if (trustDevice) {
                 addTrustedDevice(pending.deviceId, pending.deviceName)
             }
-            
+
             // Remove from pending list
             val currentPending = _pendingConnections.value.toMutableList()
             currentPending.remove(pending)
             _pendingConnections.value = currentPending
-            
+
             Log.i(TAG, "Accepted connection from ${pending.deviceName}")
         } catch (e: Exception) {
             Log.e(TAG, "Error accepting connection", e)
         }
     }
-    
+
     /**
      * Reject a pending connection request
      */
@@ -162,21 +162,21 @@ class ConnectionManager(context: Context) {
                 deviceName = android.os.Build.MODEL,
                 reason = reason
             )
-            
+
             pending.socket.send(Json.encodeToString(response))
             pending.socket.close(1000, reason)
-            
+
             // Remove from pending list
             val currentPending = _pendingConnections.value.toMutableList()
             currentPending.remove(pending)
             _pendingConnections.value = currentPending
-            
+
             Log.i(TAG, "Rejected connection from ${pending.deviceName}")
         } catch (e: Exception) {
             Log.e(TAG, "Error rejecting connection", e)
         }
     }
-    
+
     /**
      * Disconnect from current remote device
      */
@@ -187,14 +187,14 @@ class ConnectionManager(context: Context) {
         _connectionState.value = ConnectionState.DISCONNECTED
         Log.i(TAG, "Disconnected: $reason")
     }
-    
+
     /**
      * Send a message to the connected device (Controller mode)
      */
     fun sendMessage(message: RemoteMessage) {
         webSocketClient?.sendMessage(message)
     }
-    
+
     /**
      * Handle messages received from player (Controller mode)
      */
@@ -215,7 +215,7 @@ class ConnectionManager(context: Context) {
             }
         }
     }
-    
+
     /**
      * Trusted devices management
      */
@@ -228,11 +228,11 @@ class ConnectionManager(context: Context) {
             emptySet()
         }
     }
-    
+
     private fun isTrustedDevice(deviceId: String): Boolean {
         return getTrustedDevices().contains(deviceId)
     }
-    
+
     private fun addTrustedDevice(deviceId: String, deviceName: String) {
         val trusted = getTrustedDevices().toMutableSet()
         trusted.add(deviceId)
@@ -241,7 +241,7 @@ class ConnectionManager(context: Context) {
             .apply()
         Log.i(TAG, "Added trusted device: $deviceName")
     }
-    
+
     fun removeTrustedDevice(deviceId: String) {
         val trusted = getTrustedDevices().toMutableSet()
         trusted.remove(deviceId)
@@ -250,12 +250,12 @@ class ConnectionManager(context: Context) {
             .apply()
         Log.i(TAG, "Removed trusted device")
     }
-    
+
     fun clearTrustedDevices() {
         preferences.edit().remove(PREF_TRUSTED_DEVICES).apply()
         Log.i(TAG, "Cleared all trusted devices")
     }
-    
+
     /**
      * Cleanup resources
      */

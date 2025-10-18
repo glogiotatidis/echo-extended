@@ -442,4 +442,35 @@
     <string name="circle">Circle</string>
     <string name="horizontal">Horizontal</string>
     <string name="vertical">Vertical</string>
+
+    <!-- Remote Control -->
+    <string name="remote_control">Remote Control</string>
+    <string name="remote_player_mode">Player Mode</string>
+    <string name="remote_controller_mode">Controller Mode</string>
+    <string name="enable_player_mode">Enable Player Mode</string>
+    <string name="enable_player_mode_summary">Allow other devices to control this player</string>
+    <string name="discover_devices">Discover Devices</string>
+    <string name="discover_devices_summary">Find Echo players on your network</string>
+    <string name="connected_to_x">Connected to %1$s</string>
+    <string name="controlling_x">Controlling: %1$s</string>
+    <string name="controlled_by_x">Controlled by: %1$s</string>
+    <string name="connection_request">Connection Request</string>
+    <string name="x_wants_to_connect">%1$s wants to connect</string>
+    <string name="accept">Accept</string>
+    <string name="reject">Reject</string>
+    <string name="trust_device">Trust this device</string>
+    <string name="disconnect">Disconnect</string>
+    <string name="no_devices_found">No devices found</string>
+    <string name="searching_for_devices">Searching for devices…</string>
+    <string name="connect">Connect</string>
+    <string name="connecting">Connecting…</string>
+    <string name="connection_failed">Connection failed</string>
+    <string name="extension_not_found">Extension not found</string>
+    <string name="extension_x_required">Extension "%1$s" is required but not installed on this device</string>
+    <string name="manual_connection">Manual Connection</string>
+    <string name="enter_ip_address">Enter IP Address</string>
+    <string name="ip_address_hint">192.168.1.100</string>
+    <string name="port">Port</string>
+    <string name="available_players">Available Players</string>
+    <string name="remote_playback">Remote Playback</string>
 </resources>

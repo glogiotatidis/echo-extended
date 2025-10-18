@@ -21,30 +21,30 @@ import kotlinx.coroutines.plus
 class PlayerStateSynchronizer(
     private val playerState: PlayerState
 ) {
-    
+
     private val scope = CoroutineScope(Dispatchers.Main) + CoroutineName("PlayerStateSynchronizer")
-    
+
     private val _syncedState = MutableStateFlow<RemoteMessage.PlayerState?>(null)
     val syncedState: StateFlow<RemoteMessage.PlayerState?> = _syncedState.asStateFlow()
-    
+
     private var syncJob: Job? = null
     private var positionUpdateJob: Job? = null
-    
+
     // Callback to broadcast state changes
     var onStateChanged: ((RemoteMessage.PlayerState) -> Unit)? = null
     var onQueueChanged: ((RemoteMessage.QueueUpdate) -> Unit)? = null
     var onPositionChanged: ((RemoteMessage.PositionUpdate) -> Unit)? = null
-    
+
     private var lastQueue: List<MediaItem> = emptyList()
     private var lastCurrentIndex: Int = -1
     private var lastIsPlaying: Boolean = false
     private var lastPosition: Long = 0L
-    
+
     companion object {
         private const val TAG = "PlayerStateSynchronizer"
         private const val POSITION_UPDATE_INTERVAL_MS = 1000L
     }
-    
+
     /**
      * Start synchronizing player state
      */
@@ -61,9 +61,9 @@ class PlayerStateSynchronizer(
             Log.w(TAG, "Sync already active")
             return
         }
-        
+
         Log.i(TAG, "Starting player state synchronization")
-        
+
         syncJob = scope.launch {
             // Observe player state changes
             playerState.current.collect { current ->
@@ -77,10 +77,10 @@ class PlayerStateSynchronizer(
                         shuffleMode = shuffleMode,
                         repeatMode = repeatMode
                     )
-                    
+
                     _syncedState.value = state
                     onStateChanged?.invoke(state)
-                    
+
                     // Detect queue changes
                     if (hasQueueChanged(queue, current.index)) {
                         val queueUpdate = RemoteMessage.QueueUpdate(
@@ -91,7 +91,7 @@ class PlayerStateSynchronizer(
                         lastQueue = queue
                         lastCurrentIndex = current.index
                     }
-                    
+
                     // Start/stop position updates based on playback state
                     if (current.isPlaying && !lastIsPlaying) {
                         startPositionUpdates(duration)
@@ -103,7 +103,7 @@ class PlayerStateSynchronizer(
             }
         }
     }
-    
+
     /**
      * Stop synchronizing player state
      */
@@ -114,7 +114,7 @@ class PlayerStateSynchronizer(
         stopPositionUpdates()
         _syncedState.value = null
     }
-    
+
     /**
      * Update queue information
      */
@@ -129,17 +129,17 @@ class PlayerStateSynchronizer(
             lastCurrentIndex = currentIndex
         }
     }
-    
+
     /**
      * Update position periodically while playing
      */
     private fun startPositionUpdates(duration: Long) {
         stopPositionUpdates()
-        
+
         positionUpdateJob = scope.launch {
             while (true) {
                 delay(POSITION_UPDATE_INTERVAL_MS)
-                
+
                 val current = playerState.current.value
                 if (current != null && current.isPlaying) {
                     // Position is estimated here; actual position should come from player
@@ -154,12 +154,12 @@ class PlayerStateSynchronizer(
             }
         }
     }
-    
+
     private fun stopPositionUpdates() {
         positionUpdateJob?.cancel()
         positionUpdateJob = null
     }
-    
+
     /**
      * Create a complete player state message
      */
@@ -186,19 +186,19 @@ class PlayerStateSynchronizer(
             isLiked = current.mediaItem.isLiked
         )
     }
-    
+
     /**
      * Check if queue has changed
      */
     private fun hasQueueChanged(newQueue: List<MediaItem>, newIndex: Int): Boolean {
         if (newQueue.size != lastQueue.size) return true
         if (newIndex != lastCurrentIndex) return true
-        
+
         return newQueue.zip(lastQueue).any { (new, old) ->
             new.mediaId != old.mediaId
         }
     }
-    
+
     /**
      * Broadcast a full state update
      */
@@ -213,7 +213,7 @@ class PlayerStateSynchronizer(
         repeatMode: Int
     ) {
         val current = playerState.current.value ?: return
-        
+
         val state = RemoteMessage.PlayerState(
             currentTrack = current.track,
             extensionId = current.mediaItem.extensionId,
@@ -227,7 +227,7 @@ class PlayerStateSynchronizer(
             currentIndex = currentIndex,
             isLiked = current.mediaItem.isLiked
         )
-        
+
         _syncedState.value = state
         onStateChanged?.invoke(state)
     }

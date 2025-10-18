@@ -10,7 +10,7 @@ import kotlinx.serialization.Serializable
  */
 @Serializable
 sealed class RemoteMessage {
-    
+
     // Connection & Handshake Messages
     @Serializable
     data class ConnectionRequest(
@@ -18,42 +18,42 @@ sealed class RemoteMessage {
         val deviceId: String,
         val installedExtensions: List<String>
     ) : RemoteMessage()
-    
+
     @Serializable
     data class ConnectionResponse(
         val accepted: Boolean,
         val deviceName: String,
         val reason: String? = null
     ) : RemoteMessage()
-    
+
     @Serializable
     data class Disconnect(val reason: String = "User disconnected") : RemoteMessage()
-    
+
     // Playback Control Messages
     @Serializable
     data class PlayPause(val isPlaying: Boolean) : RemoteMessage()
-    
+
     @Serializable
     data class Seek(val position: Long) : RemoteMessage()
-    
+
     @Serializable
     data class SeekRelative(val delta: Long) : RemoteMessage()
-    
+
     @Serializable
     data class Next : RemoteMessage()
-    
+
     @Serializable
     data class Previous : RemoteMessage()
-    
+
     @Serializable
     data class SetShuffleMode(val enabled: Boolean) : RemoteMessage()
-    
+
     @Serializable
     data class SetRepeatMode(val mode: Int) : RemoteMessage()
-    
+
     @Serializable
     data class VolumeChange(val volume: Float) : RemoteMessage()
-    
+
     // Queue Management Messages
     @Serializable
     data class SetQueue(
@@ -62,21 +62,21 @@ sealed class RemoteMessage {
         val extensionId: String,
         val context: EchoMediaItem? = null
     ) : RemoteMessage()
-    
+
     @Serializable
     data class AddToQueue(
         val item: EchoMediaItem,
         val extensionId: String,
         val loaded: Boolean
     ) : RemoteMessage()
-    
+
     @Serializable
     data class AddToNext(
         val item: EchoMediaItem,
         val extensionId: String,
         val loaded: Boolean
     ) : RemoteMessage()
-    
+
     @Serializable
     data class PlayItem(
         val item: EchoMediaItem,
@@ -84,19 +84,19 @@ sealed class RemoteMessage {
         val loaded: Boolean,
         val shuffle: Boolean = false
     ) : RemoteMessage()
-    
+
     @Serializable
     data class RemoveQueueItem(val position: Int) : RemoteMessage()
-    
+
     @Serializable
     data class MoveQueueItem(val fromPosition: Int, val toPosition: Int) : RemoteMessage()
-    
+
     @Serializable
     data class ClearQueue : RemoteMessage()
-    
+
     @Serializable
     data class PlayQueueItem(val position: Int) : RemoteMessage()
-    
+
     // State Synchronization Messages
     @Serializable
     data class PlayerState(
@@ -112,23 +112,23 @@ sealed class RemoteMessage {
         val currentIndex: Int,
         val isLiked: Boolean = false
     ) : RemoteMessage()
-    
+
     @Serializable
     data class QueueUpdate(
         val queue: List<Track>,
         val currentIndex: Int
     ) : RemoteMessage()
-    
+
     @Serializable
     data class PositionUpdate(
         val position: Long,
         val duration: Long
     ) : RemoteMessage()
-    
+
     // Like/Unlike Messages
     @Serializable
     data class LikeTrack(val isLiked: Boolean) : RemoteMessage()
-    
+
     // Error Messages
     @Serializable
     data class Error(
@@ -136,7 +136,7 @@ sealed class RemoteMessage {
         val message: String,
         val details: String? = null
     ) : RemoteMessage()
-    
+
     @Serializable
     enum class ErrorCode {
         EXTENSION_NOT_FOUND,
@@ -145,11 +145,11 @@ sealed class RemoteMessage {
         NETWORK_ERROR,
         UNKNOWN_ERROR
     }
-    
+
     // Heartbeat for connection keepalive
     @Serializable
     data class Ping(val timestamp: Long = System.currentTimeMillis()) : RemoteMessage()
-    
+
     @Serializable
     data class Pong(val timestamp: Long = System.currentTimeMillis()) : RemoteMessage()
 }

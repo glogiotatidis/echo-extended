@@ -20,14 +20,14 @@ class EchoWebSocketServer(
     private val onConnect: suspend (WebSocket) -> Unit = {},
     private val onDisconnect: suspend (WebSocket, String) -> Unit = { _, _ -> }
 ) : WebSocketServer(InetSocketAddress(port)) {
-    
+
     private val scope = CoroutineScope(Dispatchers.IO) + CoroutineName("EchoWebSocketServer")
-    
+
     companion object {
         private const val TAG = "EchoWebSocketServer"
         const val DEFAULT_PORT = 8765
     }
-    
+
     override fun onOpen(conn: WebSocket, handshake: ClientHandshake) {
         Log.d(TAG, "New connection from ${conn.remoteSocketAddress}")
         scope.launch {
@@ -38,7 +38,7 @@ class EchoWebSocketServer(
             }
         }
     }
-    
+
     override fun onClose(conn: WebSocket, code: Int, reason: String, remote: Boolean) {
         Log.d(TAG, "Connection closed: $reason (code: $code, remote: $remote)")
         scope.launch {
@@ -49,7 +49,7 @@ class EchoWebSocketServer(
             }
         }
     }
-    
+
     override fun onMessage(conn: WebSocket, message: String) {
         scope.launch {
             try {
@@ -62,20 +62,20 @@ class EchoWebSocketServer(
             }
         }
     }
-    
+
     override fun onMessage(conn: WebSocket?, message: ByteBuffer?) {
         // Binary messages not used in this protocol
         Log.w(TAG, "Received unexpected binary message")
     }
-    
+
     override fun onError(conn: WebSocket?, ex: Exception) {
         Log.e(TAG, "WebSocket error", ex)
     }
-    
+
     override fun onStart() {
         Log.i(TAG, "WebSocket server started on port $port")
     }
-    
+
     /**
      * Send a message to a specific client
      */
@@ -92,7 +92,7 @@ class EchoWebSocketServer(
             Log.e(TAG, "Error sending message", e)
         }
     }
-    
+
     /**
      * Broadcast a message to all connected clients
      */
@@ -105,19 +105,19 @@ class EchoWebSocketServer(
             Log.e(TAG, "Error broadcasting message", e)
         }
     }
-    
+
     /**
      * Send an error message to a client
      */
     fun sendError(conn: WebSocket, code: RemoteMessage.ErrorCode, message: String, details: String? = null) {
         sendMessage(conn, RemoteMessage.Error(code, message, details))
     }
-    
+
     /**
      * Get all currently connected clients
      */
     fun getConnectedClients(): Set<WebSocket> = connections.toSet()
-    
+
     /**
      * Disconnect a specific client
      */
@@ -129,7 +129,7 @@ class EchoWebSocketServer(
             Log.e(TAG, "Error disconnecting client", e)
         }
     }
-    
+
     /**
      * Gracefully shutdown the server
      */
