@@ -82,9 +82,9 @@ object DI {
         viewModelOf(::EditPlaylistViewModel)
 
         viewModelOf(::DownloadViewModel)
-        
+
         // Remote Control
-        viewModelOf(::RemoteViewModel) { 
+        viewModelOf(::RemoteViewModel) {
             RemoteViewModel(androidContext(), get())
         }
     }
