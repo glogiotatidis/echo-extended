@@ -94,6 +94,7 @@ class PlayerFragment : Fragment() {
     private var binding by autoClearedNullable<FragmentPlayerBinding>()
     private val viewModel by activityViewModel<PlayerViewModel>()
     private val uiViewModel by activityViewModel<UiViewModel>()
+    private val remoteViewModel by activityViewModel<dev.brahmkshatriya.echo.ui.remote.RemoteViewModel>()
     private val adapter by lazy {
         PlayerTrackAdapter(uiViewModel, viewModel.playerState.current, adapterListener)
     }
@@ -503,6 +504,17 @@ class PlayerFragment : Fragment() {
         }
         val bufferView =
             binding?.playerView?.findViewById<ProgressBar>(androidx.media3.ui.R.id.exo_buffering)
+        // Observe remote connection state for visual feedback
+        observe(remoteViewModel.connectionState) { state ->
+            updateRemoteConnectionUI()
+        }
+        observe(remoteViewModel.connectedDevice) { device ->
+            updateRemoteConnectionUI()
+        }
+        observe(remoteViewModel.isBeingControlled) { controlled ->
+            updateRemoteConnectionUI()
+        }
+        
         observe(uiViewModel.playerColors) {
             val context = requireContext()
             if (context.isPlayerColor() && context.isDynamic()) {
@@ -555,10 +567,20 @@ class PlayerFragment : Fragment() {
     private fun FragmentPlayerBinding.applyCurrent(item: MediaItem) {
         val track = item.track
         val extId = item.extensionId
+        
+        // Update remote connection UI first
+        updateRemoteConnectionUI()
+        
+        // Only update title if not in remote mode
+        val isRemote = remoteViewModel.connectionState.value == dev.brahmkshatriya.echo.remote.ConnectionState.CONNECTED ||
+                       remoteViewModel.isBeingControlled.value
+        
         expandedToolbar.run {
-            val itemContext = item.context
-            title = if (itemContext != null) context.getString(R.string.playing_from) else null
-            subtitle = itemContext?.title
+            if (!isRemote) {
+                val itemContext = item.context
+                title = if (itemContext != null) context.getString(R.string.playing_from) else null
+                subtitle = itemContext?.title
+            }
             setOnMenuItemClickListener {
                 if (it.itemId != R.id.menu_more) return@setOnMenuItemClickListener false
                 onMoreClicked(item)
@@ -597,6 +619,42 @@ class PlayerFragment : Fragment() {
         }
     }
 
+    private fun updateRemoteConnectionUI() {
+        val binding = binding ?: return
+        val connectionState = remoteViewModel.connectionState.value
+        val connectedDevice = remoteViewModel.connectedDevice.value
+        val isBeingControlled = remoteViewModel.isBeingControlled.value
+        
+        binding.expandedToolbar.run {
+            when {
+                connectionState == dev.brahmkshatriya.echo.remote.ConnectionState.CONNECTED && connectedDevice != null -> {
+                    // Controller mode - controlling a remote player
+                    title = getString(R.string.controlling_x, connectedDevice.name)
+                    setBackgroundColor(requireContext().getColor(R.color.app_color))
+                    alpha = 0.9f
+                }
+                isBeingControlled -> {
+                    // Player mode - being controlled by remote
+                    val controllerName = remoteViewModel.controllerName.value ?: "Remote"
+                    title = getString(R.string.controlled_by_x, controllerName)
+                    setBackgroundColor(requireContext().getColor(R.color.app_color))
+                    alpha = 0.9f
+                }
+                else -> {
+                    // Normal mode - restore original title
+                    val current = viewModel.playerState.current.value
+                    if (current != null) {
+                        val itemContext = current.mediaItem.context
+                        title = if (itemContext != null) getString(R.string.playing_from) else null
+                        subtitle = itemContext?.title
+                    }
+                    setBackgroundColor(android.graphics.Color.TRANSPARENT)
+                    alpha = 1f
+                }
+            }
+        }
+    }
+    
     private fun openItem(extension: String, item: EchoMediaItem) {
         requireActivity().openFragment<MediaFragment>(
             null, MediaFragment.getBundle(extension, item, false)

@@ -83,17 +83,17 @@ class PlayerViewModel(
         val remote = remoteViewModel
         val state = remote?.connectionState?.value
         val device = remote?.connectedDevice?.value
-        
-        val result = remote != null && 
-                     state == ConnectionState.CONNECTED && 
+
+        val result = remote != null &&
+                     state == ConnectionState.CONNECTED &&
                      device != null
-        
+
         android.util.Log.d("PlayerViewModel", "isControllingRemote check:")
         android.util.Log.d("PlayerViewModel", "  remoteViewModel: ${remote != null}")
         android.util.Log.d("PlayerViewModel", "  connectionState: $state")
         android.util.Log.d("PlayerViewModel", "  connectedDevice: ${device?.name}")
         android.util.Log.d("PlayerViewModel", "  → Result: $result")
-        
+
         return result
     }
 
