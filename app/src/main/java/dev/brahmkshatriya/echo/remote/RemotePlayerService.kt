@@ -67,7 +67,7 @@ class RemotePlayerService : Service() {
         private const val ACTION_STOP = "dev.brahmkshatriya.echo.remote.STOP_PLAYER"
         private const val NOTIFICATION_ID = 1001
         private const val CHANNEL_ID = "echo_remote_player"
-        
+
         fun startService(context: Context) {
             val intent = Intent(context, RemotePlayerService::class.java).apply {
                 action = ACTION_START
@@ -78,7 +78,7 @@ class RemotePlayerService : Service() {
                 context.startService(intent)
             }
         }
-        
+
         fun stopService(context: Context) {
             val intent = Intent(context, RemotePlayerService::class.java).apply {
                 action = ACTION_STOP
@@ -122,7 +122,7 @@ class RemotePlayerService : Service() {
         }
         return START_STICKY
     }
-    
+
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
@@ -136,14 +136,14 @@ class RemotePlayerService : Service() {
             notificationManager.createNotificationChannel(channel)
         }
     }
-    
+
     private fun createNotification(): Notification {
         val notificationIntent = Intent(this, dev.brahmkshatriya.echo.MainActivity::class.java)
         val pendingIntent = PendingIntent.getActivity(
             this, 0, notificationIntent,
             PendingIntent.FLAG_IMMUTABLE
         )
-        
+
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("Remote Player Mode Active")
             .setContentText("Echo is accepting remote connections")
@@ -172,13 +172,13 @@ class RemotePlayerService : Service() {
                 onConnect = { socket -> handleControllerConnect(socket) },
                 onDisconnect = { socket, reason -> handleControllerDisconnect(socket, reason) }
             )
-            
+
             Log.i(TAG, "Starting WebSocket server...")
             webSocketServer?.start()
-            
+
             // Wait a bit for server to start
             Thread.sleep(100)
-            
+
             val serverAddress = webSocketServer?.address
             Log.i(TAG, "WebSocket server started at $serverAddress")
 
@@ -193,7 +193,7 @@ class RemotePlayerService : Service() {
         } catch (e: Exception) {
             Log.e(TAG, "Error starting player mode", e)
             e.printStackTrace()
-            
+
             // Cleanup on error
             webSocketServer?.stop()
             webSocketServer = null
@@ -313,7 +313,7 @@ class RemotePlayerService : Service() {
     private fun handleConnectionRequest(socket: WebSocket, request: RemoteMessage.ConnectionRequest) {
         Log.i(TAG, "Connection request from ${request.deviceName}")
         controllerSockets[socket] = request.deviceId
-        
+
         // Let ConnectionManager handle it (will show pairing dialog via pending connections)
         connectionManager.handleConnectionRequest(socket, request)
     }
@@ -362,11 +362,11 @@ class RemotePlayerService : Service() {
     }
 
     fun getConnectionManager(): ConnectionManager = connectionManager
-    
+
     fun getDiscoveryManager(): DeviceDiscoveryManager = discoveryManager
-    
+
     fun getStateSynchronizer(): PlayerStateSynchronizer = stateSynchronizer
-    
+
     /**
      * Set the PlayerViewModel for executing playback commands
      */
@@ -374,7 +374,7 @@ class RemotePlayerService : Service() {
         this.playerViewModel = viewModel
         Log.i(TAG, "PlayerViewModel set for remote control")
     }
-    
+
     /**
      * Check if there are any connected controllers
      */

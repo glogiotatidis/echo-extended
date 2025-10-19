@@ -42,16 +42,16 @@ class RemoteViewModel(
 
     private val _pendingConnections = MutableStateFlow<List<ConnectionManager.PendingConnection>>(emptyList())
     val pendingConnections: StateFlow<List<ConnectionManager.PendingConnection>> = _pendingConnections.asStateFlow()
-    
+
     private val _isBeingControlled = MutableStateFlow(false)
     val isBeingControlled: StateFlow<Boolean> = _isBeingControlled.asStateFlow()
-    
+
     private val _controllerName = MutableStateFlow<String?>(null)
     val controllerName: StateFlow<String?> = _controllerName.asStateFlow()
-    
+
     private var playerService: RemotePlayerService? = null
     private var controllerService: RemoteControllerService? = null
-    
+
     // Callback for showing pairing dialog
     var onShowPairingDialog: ((ConnectionManager.PendingConnection) -> Unit)? = null
 
@@ -64,12 +64,12 @@ class RemoteViewModel(
             viewModelScope.launch {
                 playerService?.getConnectionManager()?.pendingConnections?.collect { pending ->
                     _pendingConnections.value = pending
-                    
+
                     // Show pairing dialog for new pending connections
                     pending.forEach { pendingConnection ->
                         onShowPairingDialog?.invoke(pendingConnection)
                     }
-                    
+
                     // Update controlled state
                     _isBeingControlled.value = binder.getService().hasConnectedControllers()
                 }
@@ -215,14 +215,14 @@ class RemoteViewModel(
         _isBeingControlled.value = true
         _controllerName.value = pending.deviceName
     }
-    
+
     /**
      * Reject a pending connection request (Player mode)
      */
     fun rejectConnection(pending: ConnectionManager.PendingConnection) {
         playerService?.getConnectionManager()?.rejectConnection(pending)
     }
-    
+
     /**
      * Show pairing dialog for a pending connection
      */

@@ -18,10 +18,10 @@ import dev.brahmkshatriya.echo.utils.ui.AutoClearedValue.Companion.autoCleared
 import org.koin.androidx.viewmodel.ext.android.activityViewModel
 
 class RemoteDevicesBottomSheet : BottomSheetDialogFragment() {
-    
+
     private var binding by autoCleared<DialogRemoteDevicesBinding>()
     private val viewModel by activityViewModel<RemoteViewModel>()
-    
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -30,30 +30,30 @@ class RemoteDevicesBottomSheet : BottomSheetDialogFragment() {
         binding = DialogRemoteDevicesBinding.inflate(inflater, container, false)
         return binding.root
     }
-    
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         binding.topAppBar.setNavigationOnClickListener { dismiss() }
-        
+
         // Start device discovery
         viewModel.startDiscovery()
         binding.progressIndicator.isVisible = true
-        
+
         // Manual connection button
         binding.manualConnectButton.setOnClickListener {
             showManualConnectionDialog()
         }
-        
+
         // Observe discovered devices
         observe(viewModel.discoveredDevices) { devices ->
             updateDeviceList(devices)
-            
+
             // Hide progress when devices are found or after timeout
             if (devices.isNotEmpty()) {
                 binding.progressIndicator.isVisible = false
                 binding.statusText.text = getString(R.string.available_players)
             }
         }
-        
+
         // Observe connection state
         observe(viewModel.connectionState) { state ->
             when (state) {
@@ -80,40 +80,40 @@ class RemoteDevicesBottomSheet : BottomSheetDialogFragment() {
             }
         }
     }
-    
+
     private fun updateDeviceList(devices: List<RemoteDevice>) {
         binding.deviceToggleGroup.removeAllViews()
-        
+
         if (devices.isEmpty()) {
             binding.statusText.text = getString(R.string.no_devices_found)
             return
         }
-        
+
         devices.forEach { device ->
             val button = ItemRemoteDeviceBinding.inflate(
                 layoutInflater,
                 binding.deviceToggleGroup,
                 false
             ).root
-            
+
             button.text = device.name
             button.setOnClickListener {
                 connectToDevice(device)
             }
-            
+
             binding.deviceToggleGroup.addView(button)
         }
     }
-    
+
     private fun connectToDevice(device: RemoteDevice) {
         viewModel.connectToDevice(device)
     }
-    
+
     private fun showManualConnectionDialog() {
         val editText = TextInputEditText(requireContext()).apply {
             hint = getString(R.string.ip_address_hint)
         }
-        
+
         com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
             .setTitle(R.string.manual_connection)
             .setMessage(R.string.enter_ip_address)
@@ -133,7 +133,7 @@ class RemoteDevicesBottomSheet : BottomSheetDialogFragment() {
             .setNegativeButton(R.string.cancel, null)
             .show()
     }
-    
+
     override fun onDestroyView() {
         super.onDestroyView()
         // Stop discovery when bottom sheet is closed

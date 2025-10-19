@@ -56,7 +56,7 @@ class DeviceDiscoveryManager(private val context: Context) {
                     isRegistered = true
                     Log.i(TAG, "✅ NSD Service registered successfully: ${nsdServiceInfo.serviceName} on port $port")
                 }
-                
+
                 override fun onRegistrationFailed(serviceInfo: NsdServiceInfo, errorCode: Int) {
                     Log.e(TAG, "❌ NSD Service registration failed with error code: $errorCode")
                     Log.e(TAG, "Service name attempted: ${serviceInfo.serviceName}, type: ${serviceInfo.serviceType}, port: ${serviceInfo.port}")
@@ -128,12 +128,12 @@ class DeviceDiscoveryManager(private val context: Context) {
                     isDiscovering = true
                     Log.i(TAG, "✅ NSD Discovery started for type: $serviceType")
                 }
-                
+
                 override fun onDiscoveryStopped(serviceType: String) {
                     isDiscovering = false
                     Log.i(TAG, "Discovery stopped for type: $serviceType")
                 }
-                
+
                 override fun onServiceFound(serviceInfo: NsdServiceInfo) {
                     Log.i(TAG, "📡 NSD Service found: ${serviceInfo.serviceName} (type: ${serviceInfo.serviceType})")
 
@@ -153,28 +153,28 @@ class DeviceDiscoveryManager(private val context: Context) {
                             val hostAddress = serviceInfo.host?.hostAddress
                             Log.i(TAG, "✅ Service resolved: ${serviceInfo.serviceName}")
                             Log.i(TAG, "   Address: $hostAddress, Port: ${serviceInfo.port}")
-                            
+
                             if (hostAddress == null) {
                                 Log.e(TAG, "❌ Host address is null for ${serviceInfo.serviceName}")
                                 return
                             }
-                            
+
                             val device = RemoteDevice(
                                 name = serviceInfo.serviceName,
                                 address = hostAddress,
                                 port = serviceInfo.port,
                                 deviceId = UUID.randomUUID().toString() // Generate unique ID
                             )
-                            
+
                             // Add to discovered devices
                             val currentDevices = _discoveredDevices.value.toMutableList()
                             // Remove old entry if exists (by name and address)
-                            currentDevices.removeAll { 
-                                it.name == device.name && it.address == device.address 
+                            currentDevices.removeAll {
+                                it.name == device.name && it.address == device.address
                             }
                             currentDevices.add(device)
                             _discoveredDevices.value = currentDevices
-                            
+
                             Log.i(TAG, "✅ Added device to list: ${device.name} at ${device.address}:${device.port}")
                             Log.i(TAG, "   Total discovered devices: ${currentDevices.size}")
                         }

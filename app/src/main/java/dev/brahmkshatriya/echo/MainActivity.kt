@@ -70,7 +70,7 @@ open class MainActivity : AppCompatActivity() {
             add<PlayerFragment>(R.id.playerFragmentContainer, "player")
         }
         setupIntents(uiViewModel)
-        
+
         // Setup remote control pairing dialog
         setupRemoteControl()
     }
@@ -92,7 +92,7 @@ open class MainActivity : AppCompatActivity() {
             }
         }
     }
-    
+
     companion object {
         const val THEME_KEY = "theme"
         const val AMOLED_KEY = "amoled"
