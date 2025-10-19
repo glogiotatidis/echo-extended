@@ -145,7 +145,7 @@ I RemotePlayerService: PlayPause command: true
 After testing, please share:
 
 1. **Output of** `adb logcat -s PlayerViewModel:D` when you tap play
-2. **Does toolbar show** "Controlling: [Device]"?  
+2. **Does toolbar show** "Controlling: [Device]"?
 3. **Screenshot** of both devices if possible
 
 This will tell us exactly where the routing is failing!
