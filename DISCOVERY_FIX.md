@@ -2,7 +2,7 @@
 
 ## ✅ Issues Fixed (Latest Build)
 
-### 1. **Port Closed Issue - SOLVED** 
+### 1. **Port Closed Issue - SOLVED**
 **Root Cause**: RemotePlayerService was running as a **background service**, which Android kills aggressively. The WebSocket server wasn't staying alive.
 
 **Fix Applied**:
@@ -45,7 +45,7 @@ adb install -r app-debug.apk
 
 ### Step 3: Enable Player Mode (Device 1)
 1. Open Echo
-2. Settings → Remote Control  
+2. Settings → Remote Control
 3. Toggle "Enable Player Mode" ON
 4. **Verify notification appears**: "Remote Player Mode Active"
 
@@ -66,7 +66,7 @@ I RemotePlayerService: Player mode started successfully - Server running on port
 ```
 
 ### Step 5: Discover Devices (Device 2)
-1. Open Echo  
+1. Open Echo
 2. Settings → Remote Control → Discover Devices
 3. Watch logcat on Device 2
 
@@ -106,7 +106,7 @@ While I couldn't access the exact Spotube implementation, I've applied industry 
 **Cause**: Some networks block mDNS/multicast:
 - Corporate WiFi
 - Guest networks
-- Some router configurations  
+- Some router configurations
 - VPN connections
 - 2.4GHz and 5GHz on different subnets
 
@@ -117,7 +117,7 @@ While I couldn't access the exact Spotube implementation, I've applied industry 
 
 ### If Port 8765 is Blocked:
 
-**Future Enhancement**: Make port configurable in settings  
+**Future Enhancement**: Make port configurable in settings
 **Current**: Fixed to port 8765
 
 ## 🔍 Debugging Commands
