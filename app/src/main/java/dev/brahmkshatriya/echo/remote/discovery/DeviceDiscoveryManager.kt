@@ -54,11 +54,12 @@ class DeviceDiscoveryManager(private val context: Context) {
                 override fun onServiceRegistered(nsdServiceInfo: NsdServiceInfo) {
                     this@DeviceDiscoveryManager.serviceName = nsdServiceInfo.serviceName
                     isRegistered = true
-                    Log.i(TAG, "Service registered: ${nsdServiceInfo.serviceName}")
+                    Log.i(TAG, "✅ NSD Service registered successfully: ${nsdServiceInfo.serviceName} on port $port")
                 }
-
+                
                 override fun onRegistrationFailed(serviceInfo: NsdServiceInfo, errorCode: Int) {
-                    Log.e(TAG, "Service registration failed: $errorCode")
+                    Log.e(TAG, "❌ NSD Service registration failed with error code: $errorCode")
+                    Log.e(TAG, "Service name attempted: ${serviceInfo.serviceName}, type: ${serviceInfo.serviceType}, port: ${serviceInfo.port}")
                     isRegistered = false
                 }
 
@@ -125,16 +126,16 @@ class DeviceDiscoveryManager(private val context: Context) {
 
                 override fun onDiscoveryStarted(serviceType: String) {
                     isDiscovering = true
-                    Log.i(TAG, "Discovery started")
+                    Log.i(TAG, "✅ NSD Discovery started for type: $serviceType")
                 }
-
+                
                 override fun onDiscoveryStopped(serviceType: String) {
                     isDiscovering = false
-                    Log.i(TAG, "Discovery stopped")
+                    Log.i(TAG, "Discovery stopped for type: $serviceType")
                 }
-
+                
                 override fun onServiceFound(serviceInfo: NsdServiceInfo) {
-                    Log.d(TAG, "Service found: ${serviceInfo.serviceName}")
+                    Log.i(TAG, "📡 NSD Service found: ${serviceInfo.serviceName} (type: ${serviceInfo.serviceType})")
 
                     // Don't discover ourselves
                     if (serviceInfo.serviceName == serviceName) {
@@ -149,25 +150,33 @@ class DeviceDiscoveryManager(private val context: Context) {
                         }
 
                         override fun onServiceResolved(serviceInfo: NsdServiceInfo) {
-                            Log.i(TAG, "Service resolved: ${serviceInfo.serviceName}")
-
+                            val hostAddress = serviceInfo.host?.hostAddress
+                            Log.i(TAG, "✅ Service resolved: ${serviceInfo.serviceName}")
+                            Log.i(TAG, "   Address: $hostAddress, Port: ${serviceInfo.port}")
+                            
+                            if (hostAddress == null) {
+                                Log.e(TAG, "❌ Host address is null for ${serviceInfo.serviceName}")
+                                return
+                            }
+                            
                             val device = RemoteDevice(
                                 name = serviceInfo.serviceName,
-                                address = serviceInfo.host.hostAddress ?: "",
+                                address = hostAddress,
                                 port = serviceInfo.port,
                                 deviceId = UUID.randomUUID().toString() // Generate unique ID
                             )
-
+                            
                             // Add to discovered devices
                             val currentDevices = _discoveredDevices.value.toMutableList()
                             // Remove old entry if exists (by name and address)
-                            currentDevices.removeAll {
-                                it.name == device.name && it.address == device.address
+                            currentDevices.removeAll { 
+                                it.name == device.name && it.address == device.address 
                             }
                             currentDevices.add(device)
                             _discoveredDevices.value = currentDevices
-
-                            Log.i(TAG, "Added device: ${device.name} at ${device.address}:${device.port}")
+                            
+                            Log.i(TAG, "✅ Added device to list: ${device.name} at ${device.address}:${device.port}")
+                            Log.i(TAG, "   Total discovered devices: ${currentDevices.size}")
                         }
                     })
                 }

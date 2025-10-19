@@ -48,45 +48,45 @@
 ## 🎯 Feature Implementation
 
 ### Player Mode (Receiver)
-✅ **Settings Toggle**: Settings → Remote Control → Enable Player Mode  
-✅ **NSD Service Registration**: Automatically advertises device on network  
-✅ **WebSocket Server**: Listens on port 8765  
-✅ **Connection Requests**: Shows pairing dialog when controller connects  
-✅ **Trust Device Option**: Can save trusted devices for auto-accept  
+✅ **Settings Toggle**: Settings → Remote Control → Enable Player Mode
+✅ **NSD Service Registration**: Automatically advertises device on network
+✅ **WebSocket Server**: Listens on port 8765
+✅ **Connection Requests**: Shows pairing dialog when controller connects
+✅ **Trust Device Option**: Can save trusted devices for auto-accept
 ✅ **Command Execution**: All commands integrated with PlayerViewModel:
    - Play/Pause, Seek, Next/Previous
    - Shuffle, Repeat modes
    - Queue management (add, remove, move, clear)
    - Like/Unlike tracks
-✅ **Extension Validation**: Checks plugin compatibility before executing  
+✅ **Extension Validation**: Checks plugin compatibility before executing
 ✅ **State Broadcasting**: Sends state updates to all connected controllers
 
 ### Controller Mode (Sender)
-✅ **Device Discovery**: Settings → Remote Control → Discover Devices  
-✅ **NSD Discovery**: Automatically finds Echo players on network  
-✅ **Manual Connection**: Fallback option via IP address  
-✅ **WebSocket Client**: Connects to player's WebSocket server  
-✅ **Auto-reconnect**: Attempts reconnection on connection loss  
-✅ **Command Sending**: Can send all playback commands  
+✅ **Device Discovery**: Settings → Remote Control → Discover Devices
+✅ **NSD Discovery**: Automatically finds Echo players on network
+✅ **Manual Connection**: Fallback option via IP address
+✅ **WebSocket Client**: Connects to player's WebSocket server
+✅ **Auto-reconnect**: Attempts reconnection on connection loss
+✅ **Command Sending**: Can send all playback commands
 ✅ **State Reception**: Receives player state updates
 
 ### Security & Compatibility
-✅ **User Confirmation**: Player must accept connection  
-✅ **Extension Validation**: Verifies required plugins exist on both devices  
-✅ **Error Messages**: Clear error when extension missing  
-✅ **Trusted Devices**: Optional auto-accept for known controllers  
+✅ **User Confirmation**: Player must accept connection
+✅ **Extension Validation**: Verifies required plugins exist on both devices
+✅ **Error Messages**: Clear error when extension missing
+✅ **Trusted Devices**: Optional auto-accept for known controllers
 ✅ **Graceful Disconnection**: Clean connection teardown
 
 ## 🔧 Project Conventions Followed
 
-✅ Koin dependency injection (`by inject<>()`, `viewModelOf`)  
-✅ CoroutineScope with CoroutineName  
-✅ Extension functions (`.getSettings()`)  
-✅ AutoCleared binding for fragments  
-✅ Companion objects for constants  
-✅ Proper service lifecycle  
-✅ StateFlow patterns  
-✅ Material Design components  
+✅ Koin dependency injection (`by inject<>()`, `viewModelOf`)
+✅ CoroutineScope with CoroutineName
+✅ Extension functions (`.getSettings()`)
+✅ AutoCleared binding for fragments
+✅ Companion objects for constants
+✅ Proper service lifecycle
+✅ StateFlow patterns
+✅ Material Design components
 ✅ Existing layout/string patterns
 
 ## 📱 User Flow
@@ -143,7 +143,7 @@ Update Local UI                               ExoPlayer/MediaSession
 
 APKs built by GitHub Actions automatically include remote control:
 - ✅ `debug.yml` - Builds debug APK with feature
-- ⚠️ `nightly.yml` - Needs Google Services secret  
+- ⚠️ `nightly.yml` - Needs Google Services secret
 - ⚠️ `stable.yml` - Needs Google Services secret
 
 **Note**: Nightly/stable builds will work correctly when secrets are configured or when merged to upstream repository.

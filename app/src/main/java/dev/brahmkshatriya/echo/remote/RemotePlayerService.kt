@@ -1,11 +1,17 @@
 package dev.brahmkshatriya.echo.remote
 
+import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.os.Binder
+import android.os.Build
 import android.os.IBinder
 import android.util.Log
+import androidx.core.app.NotificationCompat
 import dev.brahmkshatriya.echo.di.App
 import dev.brahmkshatriya.echo.extensions.ExtensionLoader
 import dev.brahmkshatriya.echo.playback.PlayerState
@@ -59,14 +65,20 @@ class RemotePlayerService : Service() {
         private const val TAG = "RemotePlayerService"
         private const val ACTION_START = "dev.brahmkshatriya.echo.remote.START_PLAYER"
         private const val ACTION_STOP = "dev.brahmkshatriya.echo.remote.STOP_PLAYER"
-
+        private const val NOTIFICATION_ID = 1001
+        private const val CHANNEL_ID = "echo_remote_player"
+        
         fun startService(context: Context) {
             val intent = Intent(context, RemotePlayerService::class.java).apply {
                 action = ACTION_START
             }
-            context.startService(intent)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                context.startForegroundService(intent)
+            } else {
+                context.startService(intent)
+            }
         }
-
+        
         fun stopService(context: Context) {
             val intent = Intent(context, RemotePlayerService::class.java).apply {
                 action = ACTION_STOP
@@ -101,10 +113,44 @@ class RemotePlayerService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
-            ACTION_START -> startPlayerMode()
+            ACTION_START -> {
+                createNotificationChannel()
+                startForeground(NOTIFICATION_ID, createNotification())
+                startPlayerMode()
+            }
             ACTION_STOP -> stopPlayerMode()
         }
         return START_STICKY
+    }
+    
+    private fun createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(
+                CHANNEL_ID,
+                "Remote Player Mode",
+                NotificationManager.IMPORTANCE_LOW
+            ).apply {
+                description = "Echo is accepting remote connections"
+            }
+            val notificationManager = getSystemService(NotificationManager::class.java)
+            notificationManager.createNotificationChannel(channel)
+        }
+    }
+    
+    private fun createNotification(): Notification {
+        val notificationIntent = Intent(this, dev.brahmkshatriya.echo.MainActivity::class.java)
+        val pendingIntent = PendingIntent.getActivity(
+            this, 0, notificationIntent,
+            PendingIntent.FLAG_IMMUTABLE
+        )
+        
+        return NotificationCompat.Builder(this, CHANNEL_ID)
+            .setContentTitle("Remote Player Mode Active")
+            .setContentText("Echo is accepting remote connections")
+            .setSmallIcon(dev.brahmkshatriya.echo.R.drawable.ic_sensors)
+            .setContentIntent(pendingIntent)
+            .setOngoing(true)
+            .build()
     }
 
     override fun onBind(intent: Intent?): IBinder = binder
@@ -119,23 +165,38 @@ class RemotePlayerService : Service() {
 
         try {
             // Start WebSocket server
+            Log.i(TAG, "Creating WebSocket server on port ${EchoWebSocketServer.DEFAULT_PORT}")
             webSocketServer = EchoWebSocketServer(
                 port = EchoWebSocketServer.DEFAULT_PORT,
                 onMessage = { socket, message -> handleControllerMessage(socket, message) },
                 onConnect = { socket -> handleControllerConnect(socket) },
                 onDisconnect = { socket, reason -> handleControllerDisconnect(socket, reason) }
             )
+            
+            Log.i(TAG, "Starting WebSocket server...")
             webSocketServer?.start()
+            
+            // Wait a bit for server to start
+            Thread.sleep(100)
+            
+            val serverAddress = webSocketServer?.address
+            Log.i(TAG, "WebSocket server started at $serverAddress")
 
             // Register NSD service
+            Log.i(TAG, "Registering NSD service...")
             discoveryManager.registerService(
                 deviceName = "${DeviceDiscoveryManager.DEFAULT_SERVICE_NAME_PREFIX}_${android.os.Build.MODEL}",
                 port = EchoWebSocketServer.DEFAULT_PORT
             )
 
-            Log.i(TAG, "Player mode started successfully")
+            Log.i(TAG, "Player mode started successfully - Server running on port ${EchoWebSocketServer.DEFAULT_PORT}")
         } catch (e: Exception) {
             Log.e(TAG, "Error starting player mode", e)
+            e.printStackTrace()
+            
+            // Cleanup on error
+            webSocketServer?.stop()
+            webSocketServer = null
         }
     }
 

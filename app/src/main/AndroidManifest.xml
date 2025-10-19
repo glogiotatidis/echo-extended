@@ -176,11 +176,13 @@
 
         <service
             android:name=".remote.RemotePlayerService"
-            android:exported="false" />
+            android:exported="false"
+            android:foregroundServiceType="dataSync" />
 
         <service
             android:name=".remote.RemoteControllerService"
-            android:exported="false" />
+            android:exported="false"
+            android:foregroundServiceType="dataSync" />
 
         <receiver
             android:name=".playback.PlayerCallback$ButtonReceiver"
