@@ -149,11 +149,14 @@ class RemoteViewModel(
      */
     private fun startPlayerMode() {
         try {
+            Log.i(TAG, "Starting player mode service...")
             RemotePlayerService.startService(context)
             val intent = Intent(context, RemotePlayerService::class.java)
             context.bindService(intent, playerServiceConnection, Context.BIND_AUTO_CREATE)
+            Log.i(TAG, "Player mode service started and bound")
         } catch (e: Exception) {
             Log.e(TAG, "Error starting player mode", e)
+            e.printStackTrace()
         }
     }
 

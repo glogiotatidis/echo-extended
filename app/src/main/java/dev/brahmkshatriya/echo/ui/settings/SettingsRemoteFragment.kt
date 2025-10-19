@@ -11,8 +11,10 @@ import dev.brahmkshatriya.echo.R
 import dev.brahmkshatriya.echo.common.models.ImageHolder.Companion.toResourceImageHolder
 import dev.brahmkshatriya.echo.ui.common.FragmentUtils.openFragment
 import dev.brahmkshatriya.echo.ui.remote.RemoteDevicesBottomSheet
+import dev.brahmkshatriya.echo.ui.remote.RemoteViewModel
 import dev.brahmkshatriya.echo.ui.remote.RemoteViewModel.Companion.PLAYER_MODE_ENABLED
 import dev.brahmkshatriya.echo.utils.ContextUtils.SETTINGS_NAME
+import org.koin.androidx.viewmodel.ext.android.activityViewModel
 
 class SettingsRemoteFragment : BaseSettingsFragment() {
     override val title get() = getString(R.string.remote_control)
@@ -20,12 +22,14 @@ class SettingsRemoteFragment : BaseSettingsFragment() {
     override val creator = { RemotePreference() }
 
     class RemotePreference : PreferenceFragmentCompat() {
-
+        
+        private val viewModel by activityViewModel<RemoteViewModel>()
+        
         override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
             super.onViewCreated(view, savedInstanceState)
             configure()
         }
-
+        
         override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
             val context = preferenceManager.context
             preferenceManager.sharedPreferencesName = SETTINGS_NAME
@@ -47,6 +51,11 @@ class SettingsRemoteFragment : BaseSettingsFragment() {
                     layoutResource = R.layout.preference_switch
                     isIconSpaceReserved = false
                     setDefaultValue(false)
+                    setOnPreferenceChangeListener { _, newValue ->
+                        val enabled = newValue as Boolean
+                        viewModel.setPlayerModeEnabled(enabled)
+                        true
+                    }
                     addPreference(this)
                 }
             }
