@@ -26,12 +26,12 @@ jobs:
           cache: 'gradle'
 
       - name: Cook KeyStore
-        if: ${{ secrets.KEYSTORE_B64 != '' }}
-        run: echo "${{ secrets.KEYSTORE_B64 }}" | base64 -d > $GITHUB_WORKSPACE/signing-key.jks
+        continue-on-error: true
+        run: echo "${{ secrets.KEYSTORE_B64 }}" | base64 -d > $GITHUB_WORKSPACE/signing-key.jks 2>/dev/null || echo "No keystore secret, building unsigned"
 
       - name: Cook Google Services
-        if: ${{ secrets.GOOGLE_SERVICES_B64 != '' }}
-        run: echo "${{ secrets.GOOGLE_SERVICES_B64 }}" | base64 -d > app/google-services.json
+        continue-on-error: true
+        run: echo "${{ secrets.GOOGLE_SERVICES_B64 }}" | base64 -d > app/google-services.json 2>/dev/null || echo "No Google Services, skipping Firebase"
 
       - name: Make gradlew executable
         run: chmod +x ./gradlew
@@ -63,24 +63,32 @@ jobs:
           files: app/build/${{ env.VERSION }}.apk
 
       - name: Upload APK to Discord
-        if: ${{ secrets.DISCORD_RELEASE_WEBHOOK != '' }}
+        continue-on-error: true
         shell: bash
         env:
           WEBHOOK: ${{ secrets.DISCORD_RELEASE_WEBHOOK }}
         run: |
+          if [ -z "$WEBHOOK" ]; then
+            echo "No Discord webhook configured, skipping"
+            exit 0
+          fi
           message=$(echo "@everyone **${{ env.VERSION }}**\n${{ env.COMMIT }}")
           curl -F "payload_json={\"content\":\"${message}\"}" \
           -F "echo_beta=@app/build/${{ env.VERSION }}.apk" \
           ${{ env.WEBHOOK }}
 
       - name: Upload APK to Telegram
-        if: ${{ secrets.TELEGRAM_BOT_ID != '' }}
+        continue-on-error: true
         shell: bash
         env:
           BOT_ID: ${{ secrets.TELEGRAM_BOT_ID }}
           CHANNEL_ID: ${{ secrets.TELEGRAM_CHANNEL_ID }}
           THREAD_ID: ${{ secrets.TELEGRAM_THREAD_ID }}
         run: |
+          if [ -z "$BOT_ID" ]; then
+            echo "No Telegram bot configured, skipping"
+            exit 0
+          fi
           regex='s/[\_\*\[\]\(\)\~\`\>\#\+\-\=\|\{\}\.\!]/\\&/g'
           message=$(printf "${{ env.COMMIT }}" | sed -E "$regex")
           curl -F "chat_id=${{ env.CHANNEL_ID }}" \
