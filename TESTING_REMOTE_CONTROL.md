@@ -11,7 +11,7 @@
 
 #### Device 1 (Player)
 1. Open Echo app
-2. Go to **Settings (⚙️)** → **Remote Control**  
+2. Go to **Settings (⚙️)** → **Remote Control**
 3. Toggle **"Enable Player Mode"** ON
 4. You should see a **persistent notification**: "Remote Player Mode Active"
 5. Check logcat for these messages:
@@ -85,7 +85,7 @@ DeviceDiscoveryManager: ✅ NSD Service registered successfully: Echo Player_Sam
 
 **Common NSD errors:**
 - **Error Code -1**: Service name conflict (another app using same name)
-- **Error Code -2**: Client disconnected  
+- **Error Code -2**: Client disconnected
 - **Error Code -3**: Registration failure
 
 **Solutions:**
@@ -117,7 +117,7 @@ Some WiFi networks block:
 - Device-to-device communication
 
 **Test with manual connection:**
-1. Find Player's IP: Settings → About Phone → Status → IP address  
+1. Find Player's IP: Settings → About Phone → Status → IP address
 2. On Controller: Tap "Manual Connection"
 3. Enter Player's IP (e.g., `192.168.1.100`)
 4. If this works → NSD is blocked by network
