@@ -26,9 +26,11 @@ jobs:
           cache: 'gradle'
 
       - name: Cook KeyStore
+        if: ${{ secrets.KEYSTORE_B64 != '' }}
         run: echo "${{ secrets.KEYSTORE_B64 }}" | base64 -d > $GITHUB_WORKSPACE/signing-key.jks
 
       - name: Cook Google Services
+        if: ${{ secrets.GOOGLE_SERVICES_B64 != '' }}
         run: echo "${{ secrets.GOOGLE_SERVICES_B64 }}" | base64 -d > app/google-services.json
 
       - name: Make gradlew executable
@@ -36,11 +38,16 @@ jobs:
 
       - name: Build with Gradle
         run: |
-          ./gradlew assembleNightly \
-          -Pandroid.injected.signing.store.file=$GITHUB_WORKSPACE/signing-key.jks \
-          -Pandroid.injected.signing.store.password=${{ secrets.PASSWORD }} \
-          -Pandroid.injected.signing.key.alias=key0 \
-          -Pandroid.injected.signing.key.password=${{ secrets.PASSWORD }}
+          if [ -f "$GITHUB_WORKSPACE/signing-key.jks" ]; then
+            ./gradlew assembleNightly \
+            -Pandroid.injected.signing.store.file=$GITHUB_WORKSPACE/signing-key.jks \
+            -Pandroid.injected.signing.store.password=${{ secrets.PASSWORD }} \
+            -Pandroid.injected.signing.key.alias=key0 \
+            -Pandroid.injected.signing.key.password=${{ secrets.PASSWORD }}
+          else
+            echo "No keystore found, building unsigned APK"
+            ./gradlew assembleNightly
+          fi
           cp app/build/outputs/apk/nightly/app-nightly.apk app/build/${{ env.VERSION }}.apk
 
       - name: Upload APK
@@ -49,6 +56,7 @@ jobs:
           path: app/build/outputs/apk/nightly/app-nightly.apk
 
       - name: Upload APK to Discord
+        if: ${{ secrets.DISCORD_NIGHTLY_WEBHOOK != '' }}
         shell: bash
         env:
           WEBHOOK: ${{ secrets.DISCORD_NIGHTLY_WEBHOOK }}
@@ -59,6 +67,7 @@ jobs:
           ${{ env.WEBHOOK }}
 
       - name: Upload APK to Telegram
+        if: ${{ secrets.TELEGRAM_BOT_ID != '' }}
         shell: bash
         env:
           BOT_ID: ${{ secrets.TELEGRAM_BOT_ID }}
