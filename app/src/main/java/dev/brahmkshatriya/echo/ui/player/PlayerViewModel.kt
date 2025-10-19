@@ -38,6 +38,9 @@ import dev.brahmkshatriya.echo.playback.PlayerCommands.resumeCommand
 import dev.brahmkshatriya.echo.playback.PlayerCommands.sleepTimer
 import dev.brahmkshatriya.echo.playback.PlayerService.Companion.getController
 import dev.brahmkshatriya.echo.playback.PlayerState
+import dev.brahmkshatriya.echo.remote.ConnectionState
+import dev.brahmkshatriya.echo.remote.RemoteMessage
+import dev.brahmkshatriya.echo.ui.remote.RemoteViewModel
 import dev.brahmkshatriya.echo.utils.ContextUtils.listenFuture
 import dev.brahmkshatriya.echo.utils.Serializer.putSerialized
 import kotlinx.coroutines.Dispatchers
@@ -62,11 +65,39 @@ class PlayerViewModel(
 ) : ViewModel() {
     private val downloadFlow = downloader.flow
 
+    // Remote control support
+    var remoteViewModel: RemoteViewModel? = null
+
     val browser = MutableStateFlow<MediaController?>(null)
     private fun withBrowser(block: suspend (MediaController) -> Unit) {
         viewModelScope.launch {
             val browser = browser.first { it != null }!!
             block(browser)
+        }
+    }
+
+    /**
+     * Check if we're connected to a remote player
+     */
+    private fun isControllingRemote(): Boolean {
+        val remote = remoteViewModel ?: return false
+        return remote.connectionState.value == ConnectionState.CONNECTED &&
+               remote.connectedDevice.value != null
+    }
+
+    /**
+     * Send command to remote player if connected, otherwise use local browser
+     */
+    private fun withBrowserOrRemote(
+        remoteMessage: (() -> RemoteMessage)? = null,
+        localBlock: suspend (MediaController) -> Unit
+    ) {
+        if (isControllingRemote() && remoteMessage != null) {
+            // Send to remote player
+            remoteViewModel?.sendCommand(remoteMessage())
+        } else {
+            // Use local player
+            withBrowser(localBlock)
         }
     }
 
@@ -89,60 +120,99 @@ class PlayerViewModel(
     }
 
     fun play(position: Int) {
-        withBrowser {
-            it.seekTo(position, 0)
-            it.playWhenReady = true
-        }
+        withBrowserOrRemote(
+            remoteMessage = { RemoteMessage.PlayQueueItem(position) },
+            localBlock = {
+                it.seekTo(position, 0)
+                it.playWhenReady = true
+            }
+        )
     }
 
     fun seek(position: Int) {
-        withBrowser { it.seekTo(position, 0) }
+        withBrowserOrRemote(
+            remoteMessage = { RemoteMessage.PlayQueueItem(position) },
+            localBlock = { it.seekTo(position, 0) }
+        )
     }
 
     fun removeQueueItem(position: Int) {
-        withBrowser { it.removeMediaItem(position) }
+        withBrowserOrRemote(
+            remoteMessage = { RemoteMessage.RemoveQueueItem(position) },
+            localBlock = { it.removeMediaItem(position) }
+        )
     }
 
     fun moveQueueItems(fromPos: Int, toPos: Int) {
-        withBrowser { it.moveMediaItem(fromPos, toPos) }
+        withBrowserOrRemote(
+            remoteMessage = { RemoteMessage.MoveQueueItem(fromPos, toPos) },
+            localBlock = { it.moveMediaItem(fromPos, toPos) }
+        )
     }
 
     fun clearQueue() {
-        withBrowser { it.clearMediaItems() }
+        withBrowserOrRemote(
+            remoteMessage = { RemoteMessage.ClearQueue() },
+            localBlock = { it.clearMediaItems() }
+        )
     }
 
     fun seekTo(pos: Long) {
-        withBrowser { it.seekTo(pos) }
+        withBrowserOrRemote(
+            remoteMessage = { RemoteMessage.Seek(pos) },
+            localBlock = { it.seekTo(pos) }
+        )
     }
 
     fun seekToAdd(position: Int) {
-        withBrowser { it.seekTo(max(0, it.currentPosition + position)) }
+        // For relative seek, we need to get current position first
+        // For remote, send relative message; for local, calculate and seek
+        if (isControllingRemote()) {
+            remoteViewModel?.sendCommand(RemoteMessage.SeekRelative(position.toLong()))
+        } else {
+            withBrowser { it.seekTo(max(0, it.currentPosition + position)) }
+        }
     }
 
     fun setPlaying(isPlaying: Boolean) {
-        withBrowser {
-            it.prepare()
-            it.playWhenReady = isPlaying
-        }
+        withBrowserOrRemote(
+            remoteMessage = { RemoteMessage.PlayPause(isPlaying) },
+            localBlock = {
+                it.prepare()
+                it.playWhenReady = isPlaying
+            }
+        )
     }
 
     fun next() {
-        withBrowser { it.seekToNextMediaItem() }
+        withBrowserOrRemote(
+            remoteMessage = { RemoteMessage.Next() },
+            localBlock = { it.seekToNextMediaItem() }
+        )
     }
 
     fun previous() {
-        withBrowser { it.seekToPrevious() }
+        withBrowserOrRemote(
+            remoteMessage = { RemoteMessage.Previous() },
+            localBlock = { it.seekToPrevious() }
+        )
     }
 
     fun setShuffle(isShuffled: Boolean, changeCurrent: Boolean = false) {
-        withBrowser {
-            it.shuffleModeEnabled = isShuffled
-            if (changeCurrent) it.seekTo(0, 0)
-        }
+        withBrowserOrRemote(
+            remoteMessage = { RemoteMessage.SetShuffleMode(isShuffled) },
+            localBlock = {
+                it.shuffleModeEnabled = isShuffled
+                if (changeCurrent) it.seekTo(0, 0)
+            }
+        )
     }
 
     fun setRepeat(repeatMode: Int) {
-        withBrowser { it.repeatMode = repeatMode }
+        withBrowserOrRemote(
+            remoteMessage = { RemoteMessage.SetRepeatMode(repeatMode) },
+            localBlock = { it.repeatMode = repeatMode }
+        )
     }
 
     suspend fun isLikeClient(extensionId: String): Boolean = withContext(Dispatchers.IO) {
@@ -153,11 +223,16 @@ class PlayerViewModel(
         viewModelScope.launch { app.throwFlow.emit(throwable) }
     }
 
-    fun likeCurrent(isLiked: Boolean) = withBrowser { controller ->
-        val future = controller.setRating(ThumbRating(isLiked))
-        app.context.listenFuture(future) { sessionResult ->
-            sessionResult.getOrElse { createException(it) }
-        }
+    fun likeCurrent(isLiked: Boolean) {
+        withBrowserOrRemote(
+            remoteMessage = { RemoteMessage.LikeTrack(isLiked) },
+            localBlock = { controller ->
+                val future = controller.setRating(ThumbRating(isLiked))
+                app.context.listenFuture(future) { sessionResult ->
+                    sessionResult.getOrElse { createException(it) }
+                }
+            }
+        )
     }
 
     fun setSleepTimer(timer: Long) {
@@ -239,13 +314,18 @@ class PlayerViewModel(
         if (item !is Track) app.messageFlow.emit(
             Message(app.context.getString(R.string.playing_x, item.title))
         )
-        withBrowser {
-            it.sendCustomCommand(playCommand, Bundle().apply {
-                putString("extId", id)
-                putSerialized("item", item)
-                putBoolean("loaded", loaded)
-                putBoolean("shuffle", false)
-            })
+        
+        if (isControllingRemote()) {
+            remoteViewModel?.sendCommand(RemoteMessage.PlayItem(item, id, loaded, shuffle = false))
+        } else {
+            withBrowser {
+                it.sendCustomCommand(playCommand, Bundle().apply {
+                    putString("extId", id)
+                    putSerialized("item", item)
+                    putBoolean("loaded", loaded)
+                    putBoolean("shuffle", false)
+                })
+            }
         }
     }
 
@@ -253,13 +333,18 @@ class PlayerViewModel(
         if (item !is Track) app.messageFlow.emit(
             Message(app.context.getString(R.string.shuffling_x, item.title))
         )
-        withBrowser {
-            it.sendCustomCommand(playCommand, Bundle().apply {
-                putString("extId", id)
-                putSerialized("item", item)
-                putBoolean("loaded", loaded)
-                putBoolean("shuffle", true)
-            })
+        
+        if (isControllingRemote()) {
+            remoteViewModel?.sendCommand(RemoteMessage.PlayItem(item, id, loaded, shuffle = true))
+        } else {
+            withBrowser {
+                it.sendCustomCommand(playCommand, Bundle().apply {
+                    putString("extId", id)
+                    putSerialized("item", item)
+                    putBoolean("loaded", loaded)
+                    putBoolean("shuffle", true)
+                })
+            }
         }
     }
 
@@ -268,12 +353,17 @@ class PlayerViewModel(
         if (item !is Track) app.messageFlow.emit(
             Message(app.context.getString(R.string.adding_x_to_queue, item.title))
         )
-        withBrowser {
-            it.sendCustomCommand(addToQueueCommand, Bundle().apply {
-                putString("extId", id)
-                putSerialized("item", item)
-                putBoolean("loaded", loaded)
-            })
+        
+        if (isControllingRemote()) {
+            remoteViewModel?.sendCommand(RemoteMessage.AddToQueue(item, id, loaded))
+        } else {
+            withBrowser {
+                it.sendCustomCommand(addToQueueCommand, Bundle().apply {
+                    putString("extId", id)
+                    putSerialized("item", item)
+                    putBoolean("loaded", loaded)
+                })
+            }
         }
     }
 
@@ -281,12 +371,17 @@ class PlayerViewModel(
         if (!(browser.value?.mediaItemCount == 0 && item is Track)) app.messageFlow.emit(
             Message(app.context.getString(R.string.adding_x_to_next, item.title))
         )
-        withBrowser {
-            it.sendCustomCommand(addToNextCommand, Bundle().apply {
-                putString("extId", id)
-                putSerialized("item", item)
-                putBoolean("loaded", loaded)
-            })
+        
+        if (isControllingRemote()) {
+            remoteViewModel?.sendCommand(RemoteMessage.AddToNext(item, id, loaded))
+        } else {
+            withBrowser {
+                it.sendCustomCommand(addToNextCommand, Bundle().apply {
+                    putString("extId", id)
+                    putSerialized("item", item)
+                    putBoolean("loaded", loaded)
+                })
+            }
         }
     }
 

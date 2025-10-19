@@ -237,6 +237,11 @@ class RemotePlayerService : Service() {
                 Log.d(TAG, "Seek command: ${message.position}")
                 playerViewModel?.seekTo(message.position)
             }
+            
+            is RemoteMessage.SeekRelative -> {
+                Log.d(TAG, "SeekRelative command: ${message.delta}")
+                playerViewModel?.seekToAdd(message.delta.toInt())
+            }
 
             is RemoteMessage.Next -> {
                 Log.d(TAG, "Next command")

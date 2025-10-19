@@ -76,6 +76,9 @@ open class MainActivity : AppCompatActivity() {
     }
 
     private fun setupRemoteControl() {
+        // Wire up PlayerViewModel to RemoteViewModel for remote commands
+        playerViewModel.remoteViewModel = remoteViewModel
+        
         // Observe pending connection requests and show pairing dialog
         var shownPendingIds = mutableSetOf<String>()
         observe(remoteViewModel.pendingConnections) { pending ->
@@ -89,6 +92,43 @@ open class MainActivity : AppCompatActivity() {
             // Clean up shown IDs when pending list is empty
             if (pending.isEmpty()) {
                 shownPendingIds.clear()
+            }
+        }
+        
+        // Show connection status messages
+        observe(remoteViewModel.connectionState) { state ->
+            when (state) {
+                ConnectionState.CONNECTED -> {
+                    val deviceName = remoteViewModel.connectedDevice.value?.name ?: ""
+                    com.google.android.material.snackbar.Snackbar.make(
+                        binding.root,
+                        getString(R.string.controlling_x, deviceName),
+                        com.google.android.material.snackbar.Snackbar.LENGTH_LONG
+                    ).show()
+                }
+                ConnectionState.DISCONNECTED -> {
+                    if (remoteViewModel.connectedDevice.value != null) {
+                        // Was connected, now disconnected
+                        com.google.android.material.snackbar.Snackbar.make(
+                            binding.root,
+                            getString(R.string.disconnect),
+                            com.google.android.material.snackbar.Snackbar.LENGTH_SHORT
+                        ).show()
+                    }
+                }
+                else -> {}
+            }
+        }
+        
+        // Show when being controlled by another device
+        observe(remoteViewModel.isBeingControlled) { isControlled ->
+            if (isControlled) {
+                val controllerName = remoteViewModel.controllerName.value ?: "Remote Device"
+                com.google.android.material.snackbar.Snackbar.make(
+                    binding.root,
+                    getString(R.string.controlled_by_x, controllerName),
+                    com.google.android.material.snackbar.Snackbar.LENGTH_LONG
+                ).show()
             }
         }
     }
