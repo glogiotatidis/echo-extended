@@ -314,7 +314,7 @@ class PlayerViewModel(
         if (item !is Track) app.messageFlow.emit(
             Message(app.context.getString(R.string.playing_x, item.title))
         )
-        
+
         if (isControllingRemote()) {
             remoteViewModel?.sendCommand(RemoteMessage.PlayItem(item, id, loaded, shuffle = false))
         } else {
@@ -333,7 +333,7 @@ class PlayerViewModel(
         if (item !is Track) app.messageFlow.emit(
             Message(app.context.getString(R.string.shuffling_x, item.title))
         )
-        
+
         if (isControllingRemote()) {
             remoteViewModel?.sendCommand(RemoteMessage.PlayItem(item, id, loaded, shuffle = true))
         } else {
@@ -353,7 +353,7 @@ class PlayerViewModel(
         if (item !is Track) app.messageFlow.emit(
             Message(app.context.getString(R.string.adding_x_to_queue, item.title))
         )
-        
+
         if (isControllingRemote()) {
             remoteViewModel?.sendCommand(RemoteMessage.AddToQueue(item, id, loaded))
         } else {
@@ -371,7 +371,7 @@ class PlayerViewModel(
         if (!(browser.value?.mediaItemCount == 0 && item is Track)) app.messageFlow.emit(
             Message(app.context.getString(R.string.adding_x_to_next, item.title))
         )
-        
+
         if (isControllingRemote()) {
             remoteViewModel?.sendCommand(RemoteMessage.AddToNext(item, id, loaded))
         } else {

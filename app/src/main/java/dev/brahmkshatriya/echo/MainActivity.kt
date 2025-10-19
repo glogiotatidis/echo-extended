@@ -24,6 +24,7 @@ import dev.brahmkshatriya.echo.ui.common.UiViewModel.Companion.setupPlayerBehavi
 import dev.brahmkshatriya.echo.ui.extensions.ExtensionsViewModel.Companion.configureExtensionsUpdater
 import dev.brahmkshatriya.echo.ui.main.MainFragment
 import dev.brahmkshatriya.echo.ui.player.PlayerFragment
+import dev.brahmkshatriya.echo.remote.ConnectionState
 import dev.brahmkshatriya.echo.ui.player.PlayerFragment.Companion.PLAYER_COLOR
 import dev.brahmkshatriya.echo.ui.player.PlayerViewModel
 import dev.brahmkshatriya.echo.ui.remote.RemoteViewModel
@@ -78,7 +79,7 @@ open class MainActivity : AppCompatActivity() {
     private fun setupRemoteControl() {
         // Wire up PlayerViewModel to RemoteViewModel for remote commands
         playerViewModel.remoteViewModel = remoteViewModel
-        
+
         // Observe pending connection requests and show pairing dialog
         var shownPendingIds = mutableSetOf<String>()
         observe(remoteViewModel.pendingConnections) { pending ->
@@ -94,7 +95,7 @@ open class MainActivity : AppCompatActivity() {
                 shownPendingIds.clear()
             }
         }
-        
+
         // Show connection status messages
         observe(remoteViewModel.connectionState) { state ->
             when (state) {
@@ -119,7 +120,7 @@ open class MainActivity : AppCompatActivity() {
                 else -> {}
             }
         }
-        
+
         // Show when being controlled by another device
         observe(remoteViewModel.isBeingControlled) { isControlled ->
             if (isControlled) {

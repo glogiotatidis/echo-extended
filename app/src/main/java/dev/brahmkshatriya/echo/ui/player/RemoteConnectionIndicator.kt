@@ -11,7 +11,7 @@ import dev.brahmkshatriya.echo.ui.remote.RemoteViewModel
 import dev.brahmkshatriya.echo.utils.ContextUtils.observe
 
 object RemoteConnectionIndicator {
-    
+
     /**
      * Setup remote connection indicator
      * Shows banner when controlling remote player or being controlled
@@ -23,7 +23,7 @@ object RemoteConnectionIndicator {
         indicatorView: TextView?
     ) {
         if (indicatorView == null) return
-        
+
         // Observe connection state for controller mode
         lifecycleOwner.observe(remoteViewModel.connectionState) { state ->
             when (state) {
@@ -42,7 +42,7 @@ object RemoteConnectionIndicator {
                 }
             }
         }
-        
+
         // Also observe if being controlled (player mode)
         lifecycleOwner.observe(remoteViewModel.isBeingControlled) { isControlled ->
             if (remoteViewModel.connectionState.value != ConnectionState.CONNECTED) {
@@ -50,7 +50,7 @@ object RemoteConnectionIndicator {
             }
         }
     }
-    
+
     private fun updateForPlayerMode(
         lifecycleOwner: LifecycleOwner,
         context: Context,
