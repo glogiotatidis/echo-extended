@@ -32,10 +32,13 @@ jobs:
       - name: Cook Google Services
         continue-on-error: true
         run: |
-          if [ -n "${{ secrets.GOOGLE_SERVICES_B64 }}" ]; then
-            echo "${{ secrets.GOOGLE_SERVICES_B64 }}" | base64 -d > app/google-services.json
+          SECRET="${{ secrets.GOOGLE_SERVICES_B64 }}"
+          if [ -n "$SECRET" ] && [ "$SECRET" != "" ]; then
+            echo "$SECRET" | base64 -d > app/google-services.json 2>/dev/null || rm -f app/google-services.json
+            echo "Google Services configured"
           else
-            echo "No Google Services secret, skipping Firebase"
+            echo "No Google Services secret, skipping Firebase (build will work without it)"
+            rm -f app/google-services.json
           fi
 
       - name: Make gradlew executable

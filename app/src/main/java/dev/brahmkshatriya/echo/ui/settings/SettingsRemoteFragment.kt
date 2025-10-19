@@ -22,14 +22,14 @@ class SettingsRemoteFragment : BaseSettingsFragment() {
     override val creator = { RemotePreference() }
 
     class RemotePreference : PreferenceFragmentCompat() {
-        
+
         private val viewModel by activityViewModel<RemoteViewModel>()
-        
+
         override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
             super.onViewCreated(view, savedInstanceState)
             configure()
         }
-        
+
         override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
             val context = preferenceManager.context
             preferenceManager.sharedPreferencesName = SETTINGS_NAME
