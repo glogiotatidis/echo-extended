@@ -80,9 +80,21 @@ class PlayerViewModel(
      * Check if we're connected to a remote player
      */
     private fun isControllingRemote(): Boolean {
-        val remote = remoteViewModel ?: return false
-        return remote.connectionState.value == ConnectionState.CONNECTED &&
-               remote.connectedDevice.value != null
+        val remote = remoteViewModel
+        val state = remote?.connectionState?.value
+        val device = remote?.connectedDevice?.value
+        
+        val result = remote != null && 
+                     state == ConnectionState.CONNECTED && 
+                     device != null
+        
+        android.util.Log.d("PlayerViewModel", "isControllingRemote check:")
+        android.util.Log.d("PlayerViewModel", "  remoteViewModel: ${remote != null}")
+        android.util.Log.d("PlayerViewModel", "  connectionState: $state")
+        android.util.Log.d("PlayerViewModel", "  connectedDevice: ${device?.name}")
+        android.util.Log.d("PlayerViewModel", "  → Result: $result")
+        
+        return result
     }
 
     /**
@@ -92,11 +104,14 @@ class PlayerViewModel(
         remoteMessage: (() -> RemoteMessage)? = null,
         localBlock: suspend (MediaController) -> Unit
     ) {
-        if (isControllingRemote() && remoteMessage != null) {
+        val controlling = isControllingRemote()
+        if (controlling && remoteMessage != null) {
             // Send to remote player
+            android.util.Log.i("PlayerViewModel", "🌐 Sending to REMOTE player: ${remoteMessage()::class.simpleName}")
             remoteViewModel?.sendCommand(remoteMessage())
         } else {
             // Use local player
+            android.util.Log.i("PlayerViewModel", "📱 Using LOCAL player (controlling=$controlling, hasMessage=${remoteMessage != null})")
             withBrowser(localBlock)
         }
     }

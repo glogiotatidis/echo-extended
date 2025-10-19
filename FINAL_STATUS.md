@@ -3,21 +3,21 @@
 ## ✅ **CRITICAL FIXES APPLIED**
 
 ### Fix #1: Player Mode Toggle (RESOLVED ✅)
-**Problem**: No notification appeared when enabling Player Mode  
-**Root Cause**: Toggle wasn't wired to RemoteViewModel  
-**Fix**: Added `setOnPreferenceChangeListener` that calls `viewModel.setPlayerModeEnabled()`  
+**Problem**: No notification appeared when enabling Player Mode
+**Root Cause**: Toggle wasn't wired to RemoteViewModel
+**Fix**: Added `setOnPreferenceChangeListener` that calls `viewModel.setPlayerModeEnabled()`
 **Result**: Service now starts when you toggle the switch!
 
 ### Fix #2: Foreground Service (RESOLVED ✅)
-**Problem**: Port was closed, devices couldn't find each other  
-**Root Cause**: Background service was killed by Android  
-**Fix**: Changed to foreground service with persistent notification  
+**Problem**: Port was closed, devices couldn't find each other
+**Root Cause**: Background service was killed by Android
+**Fix**: Changed to foreground service with persistent notification
 **Result**: WebSocket server stays alive, port 8765 open
 
 ### Fix #3: Remote Command Routing (RESOLVED ✅)
-**Problem**: Controller played locally instead of controlling remote player  
-**Root Cause**: PlayerViewModel always used local MediaController  
-**Fix**: 
+**Problem**: Controller played locally instead of controlling remote player
+**Root Cause**: PlayerViewModel always used local MediaController
+**Fix**:
 - Added `remoteViewModel` reference to PlayerViewModel
 - Created `isControllingRemote()` check
 - Created `withBrowserOrRemote()` wrapper
@@ -26,7 +26,7 @@
 **Result**: **Controller now sends commands to remote player!**
 
 ### Fix #4: Visual Feedback (RESOLVED ✅)
-**Problem**: No indication if connected to remote  
+**Problem**: No indication if connected to remote
 **Fix**: Added Snackbar messages:
 - "Controlling: [Device Name]" when connected as controller
 - "Controlled by: [Device Name]" when being controlled (player mode)
@@ -35,7 +35,7 @@
 ## 🎯 **Testing the Latest Build**
 
 ### Download Latest APK
-**Build**: #18627169313 ✅ SUCCESS  
+**Build**: #18627169313 ✅ SUCCESS
 **Link**: https://github.com/glogiotatidis/echo-extended/actions/runs/18627169313
 
 ### What to Expect Now
@@ -99,17 +99,17 @@ I PlayerViewModel: play() called // Local playback starts
 ## 🐛 **Known Issues**
 
 ### Nightly Build Failing
-**Cause**: Even with our fixes, an empty `google-services.json` file might still be created  
-**Impact**: Nightly/Stable builds fail on forks without Firebase secrets  
-**Workaround**: Use Debug build for testing (fully functional!)  
+**Cause**: Even with our fixes, an empty `google-services.json` file might still be created
+**Impact**: Nightly/Stable builds fail on forks without Firebase secrets
+**Workaround**: Use Debug build for testing (fully functional!)
 **Upstream Fix**: Will work fine when merged to main repo with secrets
 
 ### No Issue - Everything Else Works!
-✅ Device discovery works  
-✅ Pairing dialog works  
-✅ Commands route to remote player  
-✅ Visual feedback works  
-✅ All core functionality complete  
+✅ Device discovery works
+✅ Pairing dialog works
+✅ Commands route to remote player
+✅ Visual feedback works
+✅ All core functionality complete
 
 ## 📦 Commits Summary
 
@@ -123,7 +123,7 @@ I PlayerViewModel: play() called // Local playback starts
 
 ## 🎮 **Ready to Test!**
 
-Download and install the latest debug APK from:  
+Download and install the latest debug APK from:
 https://github.com/glogiotatidis/echo-extended/actions/runs/18627169313
 
 The feature should now work end-to-end:
