@@ -514,7 +514,7 @@ class PlayerFragment : Fragment() {
         observe(remoteViewModel.isBeingControlled) { controlled ->
             updateRemoteConnectionUI()
         }
-        
+
         observe(uiViewModel.playerColors) {
             val context = requireContext()
             if (context.isPlayerColor() && context.isDynamic()) {
@@ -567,14 +567,14 @@ class PlayerFragment : Fragment() {
     private fun FragmentPlayerBinding.applyCurrent(item: MediaItem) {
         val track = item.track
         val extId = item.extensionId
-        
+
         // Update remote connection UI first
         updateRemoteConnectionUI()
-        
+
         // Only update title if not in remote mode
         val isRemote = remoteViewModel.connectionState.value == dev.brahmkshatriya.echo.remote.ConnectionState.CONNECTED ||
                        remoteViewModel.isBeingControlled.value
-        
+
         expandedToolbar.run {
             if (!isRemote) {
                 val itemContext = item.context
@@ -624,7 +624,7 @@ class PlayerFragment : Fragment() {
         val connectionState = remoteViewModel.connectionState.value
         val connectedDevice = remoteViewModel.connectedDevice.value
         val isBeingControlled = remoteViewModel.isBeingControlled.value
-        
+
         binding.expandedToolbar.run {
             when {
                 connectionState == dev.brahmkshatriya.echo.remote.ConnectionState.CONNECTED && connectedDevice != null -> {
@@ -654,7 +654,7 @@ class PlayerFragment : Fragment() {
             }
         }
     }
-    
+
     private fun openItem(extension: String, item: EchoMediaItem) {
         requireActivity().openFragment<MediaFragment>(
             null, MediaFragment.getBundle(extension, item, false)
